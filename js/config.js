@@ -5,7 +5,7 @@
    주의: service_role 키는 절대 넣지 마세요. anon public 키만 사용합니다.
    ============================================================ */
 const CONFIG = {
-  SUPABASE_URL: "https://idmsacwhldrfpofbiprp.supabase.co/rest/v1/",
+  SUPABASE_URL: "https://idmsacwhldrfpofbiprp.supabase.co/",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkbXNhY3dobGRyZnBvZmJpcHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyODcyMDAsImV4cCI6MjEwMzg2MzIwMH0.DlQIi4b0IRfiiQxYdnnxrv0zRHagTLos8a6U3o8jdPo",
 
   BUCKET: "dive-videos",          // Storage 버킷 이름
