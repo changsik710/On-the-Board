@@ -230,16 +230,25 @@ async function loadAll() {
   await loadTodayCheckin();
 }
 
-function renderKPI() {
-  const mine = DIVES.filter(d => d.user_id === ME.id);
-  const maxDD = mine.reduce((a, b) => Math.max(a, Number(b.dd) || 0), 0);
-  const fbCount = Object.values(FB).flat().filter(x => x.user_id === ME.id).length;
-  const comp = mine.filter(d => d.context === "competition").length;
-  $("#kpiRow").innerHTML = `
-    <div class="kpi"><div class="k">내 다이브 기록</div><div class="v">${mine.length}</div><div class="s">누적 등록 수</div></div>
-    <div class="kpi"><div class="k">최고 난이도</div><div class="v">${maxDD ? maxDD.toFixed(1) : "-"}</div><div class="s">DD</div></div>
-    <div class="kpi"><div class="k">작성한 피드백</div><div class="v">${fbCount}</div><div class="s">자기·동료 포함</div></div>
-    <div class="kpi"><div class="k">대회 수행</div><div class="v">${comp}</div><div class="s">경기 영상 수</div></div>`;
+      <div class="kpi">
+        <div class="k">코치</div>
+        <div class="v">${coaches.length}</div>
+        <div class="s">등록 코치</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">전체 영상</div>
+        <div class="v">${DIVES.length}</div>
+        <div class="s">누적 영상</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">전체 피드백</div>
+        <div class="v">${Object.values(FB).flat().length}</div>
+        <div class="s">누적 피드백</div>
+      </div>
+    `;
+  }
 }
 
 /* ---------- 컨디션 체크인 ---------- */
