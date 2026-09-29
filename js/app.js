@@ -94,7 +94,6 @@ function bindUI() {
   ["fUser","fContext"].forEach(id => $("#"+id).onchange = renderDives);
   $("#fNo").oninput = renderDives;
 
-  $("#adminEnter").onclick = adminLogin;
   $("#ntSave").onclick = saveNotice;
   $("#expDives").onclick = () => exportCSV("dives");
   $("#expFb").onclick = () => exportCSV("feedbacks");
@@ -116,14 +115,89 @@ function bindUI() {
   $("#dvDate").value = new Date().toISOString().slice(0, 10);
 }
 
+function applyRoleUI() {
+  const role = PROFILE.role;
+
+  // 역할별 메뉴
+  $$("#tabs .tab[data-role]").forEach(tab => {
+    const allowedRole = tab.dataset.role;
+    tab.classList.toggle("hidden", allowedRole !== role);
+  });
+
+  // 학생 전용 컨디션
+  const checkin = $("#studentCheckin");
+  if (checkin) {
+    checkin.classList.toggle("hidden", role !== "student");
+  }
+
+  // 영상 필터
+  const filters = $("#feedFilters");
+  if (filters) {
+    filters.classList.toggle("hidden", role === "student");
+  }
+
+  // 영상·피드백 화면 제목
+  const title = $("#feedTitle");
+  const hint = $("#feedHint");
+
+  if (role === "student") {
+    if (title) title.textContent = "내 영상 · 코치 피드백";
+    if (hint) {
+      hint.textContent =
+        "내가 등록한 영상과 코치의 피드백을 확인합니다.";
+    }
+  }
+
+  if (role === "coach") {
+    if (title) title.textContent = "선수 영상 · 피드백";
+    if (hint) {
+      hint.textContent =
+        "전체 선수의 영상을 확인하고 피드백을 남길 수 있습니다.";
+    }
+  }
+
+  if (role === "admin") {
+    if (title) title.textContent = "전체 영상 · 피드백";
+    if (hint) {
+      hint.textContent =
+        "전체 선수의 기록과 영상을 관리합니다.";
+    }
+  }
+}
 async function enterApp(user) {
   ME = user;
-  const { data: p } = await sb.from("profiles").select("*").eq("id", user.id).single();
-  PROFILE = p || { name: "이름미입력", role: "student" };
+
+  const { data: p, error } = await sb
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (error) {
+    console.error("프로필 불러오기 실패:", error);
+  }
+
+  PROFILE = p || {
+    name: "이름미입력",
+    role: "student"
+  };
+
   $("#authView").classList.add("hidden");
   $("#appView").classList.remove("hidden");
-  $("#whoami").textContent = PROFILE.name + (PROFILE.role === "admin" ? " · 지도교사" : " · 선수");
+
+  const roleName = {
+    student: "선수",
+    coach: "코치",
+    admin: "관리자"
+  };
+
+  $("#whoami").textContent =
+    `${PROFILE.name} · ${roleName[PROFILE.role] || "사용자"}`;
+
+  applyRoleUI();
+
   await loadAll();
+
   subscribeRealtime();
 }
 
@@ -275,9 +349,19 @@ function ytEmbed(u) {
 /* ---------- 피드백 목록 ---------- */
 function renderDives() {
   const fu = $("#fUser").value, fc = $("#fContext").value, fn = $("#fNo").value.trim().toLowerCase();
-  const list = DIVES.filter(d =>
-    (!fu || d.user_id === fu) && (!fc || d.context === fc) &&
-    (!fn || (d.dive_no || "").toLowerCase().includes(fn)));
+  let sourceDives = DIVES;
+
+  // 선수는 자기 영상만 볼 수 있음
+  if (PROFILE.role === "student") {
+    sourceDives = DIVES.filter(d => d.user_id === ME.id);
+  }
+
+  // 코치와 관리자는 전체 영상
+  const list = sourceDives.filter(d =>
+    (!fu || d.user_id === fu) &&
+    (!fc || d.context === fc) &&
+    (!fn || (d.dive_no || "").toLowerCase().includes(fn))
+  );
 
   const box = $("#diveList");
   if (!list.length) { box.innerHTML = '<div class="card m">조건에 맞는 기록이 없습니다.</div>'; return; }
@@ -311,12 +395,25 @@ function diveCard(d) {
     </div>` : ""}
     <div class="fb">
       <div id="fblist-${d.id}"></div>
-      <div class="fb-form">
-        <select id="fbtag-${d.id}">${TAGS.map(t => `<option>${t}</option>`).join("")}</select>
-        <input type="text" id="fbtext-${d.id}" placeholder="피드백을 입력하세요 (재생 위치가 함께 저장됩니다)">
-        <button class="btn primary" onclick="addFB(${d.id})">등록</button>
-      </div>
-    </div>
+   ${(PROFILE.role === "coach" || PROFILE.role === "admin") ? `
+  <div class="fb-form">
+    <select id="fbtag-${d.id}">
+      ${TAGS.map(t => `<option>${t}</option>`).join("")}
+    </select>
+
+    <input
+      type="text"
+      id="fbtext-${d.id}"
+      placeholder="피드백을 입력하세요 (재생 위치가 함께 저장됩니다)"
+    >
+
+    <button
+      class="btn primary"
+      onclick="addFB(${d.id})">
+      피드백 등록
+    </button>
+  </div>
+` : ""}
     ${(d.user_id === ME.id || PROFILE.role === "admin")
       ? `<button class="btn sm danger" style="margin-top:8px" onclick="delDive(${d.id})">이 기록 삭제</button>` : ""}
   </article>`;
