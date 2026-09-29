@@ -205,54 +205,285 @@ async function enterApp(user) {
 async function loadAll() {
   const [m, d, f, n] = await Promise.all([
     sb.from("profiles").select("*").order("grade"),
-    sb.from("dives").select("*").order("dive_date", { ascending: false }).order("id", { ascending: false }),
+    sb.from("dives").select("*")
+      .order("dive_date", { ascending: false })
+      .order("id", { ascending: false }),
     sb.from("feedbacks").select("*").order("created_at"),
-    sb.from("notices").select("*").order("created_at", { ascending: false }).limit(10)
+    sb.from("notices").select("*")
+      .order("created_at", { ascending: false })
+      .limit(10)
   ]);
+
   MEMBERS = m.data || [];
   DIVES = d.data || [];
+
   FB = {};
-  (f.data || []).forEach(x => { (FB[x.dive_id] = FB[x.dive_id] || []).push(x); });
+
+  (f.data || []).forEach(x => {
+    (FB[x.dive_id] = FB[x.dive_id] || []).push(x);
+  });
 
   const sel = $("#fUser");
-  sel.innerHTML = '<option value="">전체 선수</option>' +
-    MEMBERS.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
 
-  $("#noticeList").innerHTML = (n.data || []).length
-    ? (n.data).map(x => `<div><div class="t">${esc(x.title)}</div>
-        <div class="m">${x.created_at.slice(0,10)}</div>
-        <div>${esc(x.body || "")}</div></div>`).join("")
-    : '<div class="m">등록된 공지가 없습니다.</div>';
+  sel.innerHTML =
+    '<option value="">전체 선수</option>' +
+    MEMBERS
+      .filter(x => x.role === "student")
+      .map(x =>
+        `<option value="${x.id}">
+          ${esc(x.name)}
+        </option>`
+      )
+      .join("");
 
-renderKPI();
-renderDives();
-fillCmpSelect();
+  $("#noticeList").innerHTML =
+    (n.data || []).length
+      ? n.data.map(x => `
+          <div>
+            <div class="t">${esc(x.title)}</div>
+            <div class="m">${x.created_at.slice(0,10)}</div>
+            <div>${esc(x.body || "")}</div>
+          </div>
+        `).join("")
+      : '<div class="m">등록된 공지가 없습니다.</div>';
 
-if (PROFILE.role === "student") {
-  await loadTodayCheckin();
+  renderKPI();
+  renderDives();
+  fillCmpSelect();
+
+  if (PROFILE.role === "student") {
+    await loadTodayCheckin();
+  }
 }
 
+
+/* ---------- 역할별 홈 KPI ---------- */
+function renderKPI() {
+  const role = PROFILE.role;
+
+
+  /* =========================
+     학생
+  ========================= */
+  if (role === "student") {
+
+    const mine =
+      DIVES.filter(d => d.user_id === ME.id);
+
+    const maxDD =
+      mine.reduce(
+        (a, b) =>
+          Math.max(a, Number(b.dd) || 0),
+        0
+      );
+
+    const coachFeedbackCount =
+      mine.reduce(
+        (sum, d) =>
+          sum +
+          (FB[d.id] || [])
+            .filter(f => f.role_label === "coach")
+            .length,
+        0
+      );
+
+    const comp =
+      mine.filter(
+        d => d.context === "competition"
+      ).length;
+
+
+    $("#kpiRow").innerHTML = `
+
       <div class="kpi">
-        <div class="k">코치</div>
-        <div class="v">${coaches.length}</div>
-        <div class="s">등록 코치</div>
+        <div class="k">내 다이브 기록</div>
+        <div class="v">${mine.length}</div>
+        <div class="s">누적 등록 수</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">최고 난이도</div>
+        <div class="v">
+          ${maxDD ? maxDD.toFixed(1) : "-"}
+        </div>
+        <div class="s">DD</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">코치 피드백</div>
+        <div class="v">
+          ${coachFeedbackCount}
+        </div>
+        <div class="s">누적 피드백 수</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">대회 수행</div>
+        <div class="v">${comp}</div>
+        <div class="s">경기 영상 수</div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  /* =========================
+     코치
+  ========================= */
+  if (role === "coach") {
+
+    const students =
+      MEMBERS.filter(
+        m => m.role === "student"
+      );
+
+    const allFeedbacks =
+      Object.values(FB).flat();
+
+    const myFeedbacks =
+      allFeedbacks.filter(
+        f =>
+          f.role_label === "coach" &&
+          f.user_id === ME.id
+      );
+
+    const today =
+      new Date();
+
+    const recentUploads =
+      DIVES.filter(d => {
+
+        if (!d.dive_date)
+          return false;
+
+        const date =
+          new Date(d.dive_date);
+
+        const diff =
+          (today - date) /
+          (1000 * 60 * 60 * 24);
+
+        return diff >= 0 && diff <= 7;
+      });
+
+
+    $("#kpiRow").innerHTML = `
+
+      <div class="kpi">
+        <div class="k">전체 선수</div>
+        <div class="v">
+          ${students.length}
+        </div>
+        <div class="s">
+          관리 대상 선수
+        </div>
       </div>
 
       <div class="kpi">
         <div class="k">전체 영상</div>
-        <div class="v">${DIVES.length}</div>
-        <div class="s">누적 영상</div>
+        <div class="v">
+          ${DIVES.length}
+        </div>
+        <div class="s">
+          등록된 수행 영상
+        </div>
       </div>
 
       <div class="kpi">
-        <div class="k">전체 피드백</div>
-        <div class="v">${Object.values(FB).flat().length}</div>
-        <div class="s">누적 피드백</div>
+        <div class="k">
+          내가 작성한 피드백
+        </div>
+        <div class="v">
+          ${myFeedbacks.length}
+        </div>
+        <div class="s">
+          코치 피드백
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">
+          최근 7일 업로드
+        </div>
+        <div class="v">
+          ${recentUploads.length}
+        </div>
+        <div class="s">
+          새로운 영상
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  /* =========================
+     관리자
+  ========================= */
+  if (role === "admin") {
+
+    const students =
+      MEMBERS.filter(
+        m => m.role === "student"
+      );
+
+    const coaches =
+      MEMBERS.filter(
+        m => m.role === "coach"
+      );
+
+    const allFeedbacks =
+      Object.values(FB).flat();
+
+
+    $("#kpiRow").innerHTML = `
+
+      <div class="kpi">
+        <div class="k">전체 선수</div>
+        <div class="v">
+          ${students.length}
+        </div>
+        <div class="s">
+          등록 선수
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">코치</div>
+        <div class="v">
+          ${coaches.length}
+        </div>
+        <div class="s">
+          등록 코치
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">전체 영상</div>
+        <div class="v">
+          ${DIVES.length}
+        </div>
+        <div class="s">
+          누적 영상
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">
+          전체 피드백
+        </div>
+        <div class="v">
+          ${allFeedbacks.length}
+        </div>
+        <div class="s">
+          누적 피드백
+        </div>
       </div>
     `;
   }
 }
-
 /* ---------- 컨디션 체크인 ---------- */
 async function loadTodayCheckin() {
   const today = new Date().toISOString().slice(0, 10);
