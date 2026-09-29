@@ -224,9 +224,11 @@ async function loadAll() {
         <div>${esc(x.body || "")}</div></div>`).join("")
     : '<div class="m">등록된 공지가 없습니다.</div>';
 
-  renderKPI();
-  renderDives();
-  fillCmpSelect();
+renderKPI();
+renderDives();
+fillCmpSelect();
+
+if (PROFILE.role === "student") {
   await loadTodayCheckin();
 }
 
