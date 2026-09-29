@@ -414,6 +414,7 @@ function diveCard(d) {
     </button>
   </div>
 ` : ""}
+</div>
     ${(d.user_id === ME.id || PROFILE.role === "admin")
       ? `<button class="btn sm danger" style="margin-top:8px" onclick="delDive(${d.id})">이 기록 삭제</button>` : ""}
   </article>`;
@@ -468,7 +469,10 @@ window.addFB = async (diveId) => {
   if (!body) return;
   const v = document.getElementById("v-" + diveId);
   const dive = DIVES.find(x => x.id === diveId);
-  const roleLabel = PROFILE.role === "admin" ? "coach" : (dive && dive.user_id === ME.id ? "self" : "peer");
+  const roleLabel =
+  (PROFILE.role === "coach" || PROFILE.role === "admin")
+    ? "coach"
+    : "self";
   const { error } = await sb.from("feedbacks").insert({
     dive_id: diveId, user_id: ME.id,
     ts_sec: v ? Number(v.currentTime.toFixed(1)) : null,
