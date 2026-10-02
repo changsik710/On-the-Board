@@ -119,3 +119,10 @@ video{width:100%;border-radius:6px;background:#000;display:block}
 .chart-box{height:260px;position:relative}
 .lock{max-width:380px}
 .foot{text-align:center;font-size:12px;color:var(--muted);padding:20px 16px 32px}
+
+.important-tag {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+}
