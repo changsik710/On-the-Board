@@ -244,7 +244,7 @@ async function loadAll() {
     sb.from("feedbacks").select("*").order("created_at"),
     sb.from("notices").select("*")
       .order("created_at", { ascending: false })
-      .limit(10)
+      .limit(10),
     sb.from("checkins")
   .select("*")
   .order("ck_date", { ascending: false })
