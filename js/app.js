@@ -150,7 +150,15 @@ function bindUI() {
 
 function applyRoleUI() {
   const role = PROFILE.role;
+  const staffConditionHome =
+  $("#staffConditionHome");
 
+if (staffConditionHome) {
+  staffConditionHome.classList.toggle(
+    "hidden",
+    role === "student"
+  );
+}
   // 역할별 메뉴
   $$("#tabs .tab[data-role]").forEach(tab => {
     const allowedRole = tab.dataset.role;
@@ -328,6 +336,13 @@ $("#noticeList").innerHTML =
   renderKPI();
   renderDives();
   fillCmpSelect();
+
+ if (
+  PROFILE.role === "coach" ||
+  PROFILE.role === "admin"
+) {
+  renderTeamConditions("homeConditionList");
+}
 
   if (PROFILE.role === "student") {
   await loadTodayCheckin();
