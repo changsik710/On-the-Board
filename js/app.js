@@ -97,8 +97,20 @@ function bindUI() {
 
 });
   // 슬라이더 표시값
-  const pair = [["tension","vTension"],["confidence","vConf"],["sleep","vSleep"],
-                ["sTakeoff","vTake"],["sFlight","vFlight"],["sEntry","vEntry"]];
+ const pair = [
+  ["fatigue", "vFatigue"],
+  ["pain", "vPain"],
+  ["focus", "vFocus"],
+  ["mood", "vMood"],
+
+  ["tension", "vTension"],
+  ["confidence", "vConf"],
+  ["sleep", "vSleep"],
+
+  ["sTakeoff", "vTake"],
+  ["sFlight", "vFlight"],
+  ["sEntry", "vEntry"]
+];
   pair.forEach(([a,b]) => { const el = $("#"+a); if (el) el.oninput = () => $("#"+b).textContent = el.value; });
 
   $("#saveCheckin").onclick = saveCheckin;
@@ -561,7 +573,17 @@ async function loadTodayCheckin() {
   const { data } = await sb.from("checkins").select("*")
     .eq("user_id", ME.id).eq("ck_date", today).maybeSingle();
   if (!data) return;
-  ["r1","r2","r3","r4"].forEach(k => $("#"+k).checked = !!data[k]);
+  $("#fatigue").value = data.fatigue ?? 3;
+$("#vFatigue").textContent = data.fatigue ?? 3;
+
+$("#pain").value = data.pain ?? 1;
+$("#vPain").textContent = data.pain ?? 1;
+
+$("#focus").value = data.focus ?? 3;
+$("#vFocus").textContent = data.focus ?? 3;
+
+$("#mood").value = data.mood ?? 3;
+$("#vMood").textContent = data.mood ?? 3;
   $("#tension").value = data.tension || 5;   $("#vTension").textContent = data.tension || 5;
   $("#confidence").value = data.confidence || 5; $("#vConf").textContent = data.confidence || 5;
   $("#sleep").value = data.sleep_h || 7;     $("#vSleep").textContent = data.sleep_h || 7;
@@ -571,7 +593,10 @@ async function loadTodayCheckin() {
 async function saveCheckin() {
   const row = {
     user_id: ME.id, ck_date: new Date().toISOString().slice(0, 10),
-    r1: $("#r1").checked, r2: $("#r2").checked, r3: $("#r3").checked, r4: $("#r4").checked,
+   fatigue: Number($("#fatigue").value),
+pain: Number($("#pain").value),
+focus: Number($("#focus").value),
+mood: Number($("#mood").value),
     tension: Number($("#tension").value), confidence: Number($("#confidence").value),
     sleep_h: Number($("#sleep").value), note: $("#ckNote").value.trim()
   };
