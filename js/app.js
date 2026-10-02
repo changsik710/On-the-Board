@@ -259,19 +259,11 @@ async function loadAll() {
 const notices =
   (n.data || []).slice().sort((a, b) => {
 
-    if (
-      !!a.important !==
-      !!b.important
-    ) {
-      return a.important
-        ? -1
-        : 1;
+    if (!!a.important !== !!b.important) {
+      return a.important ? -1 : 1;
     }
 
-    return (
-      new Date(b.created_at) -
-      new Date(a.created_at)
-    );
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
 
@@ -286,9 +278,7 @@ $("#noticeList").innerHTML =
 
             ${
               x.important
-                ? `<span class="tag">
-                    중요
-                  </span>`
+                ? `<span class="tag">중요</span>`
                 : ""
             }
 
@@ -297,7 +287,7 @@ $("#noticeList").innerHTML =
           </div>
 
           <div class="m">
-            ${x.created_at.slice(0,10)}
+            ${x.created_at.slice(0, 10)}
           </div>
 
           <div>
@@ -313,6 +303,9 @@ $("#noticeList").innerHTML =
         등록된 공지가 없습니다.
       </div>
     `;
+
+
+
 
   renderKPI();
   renderDives();
