@@ -256,16 +256,63 @@ async function loadAll() {
       )
       .join("");
 
-  $("#noticeList").innerHTML =
-    (n.data || []).length
-      ? n.data.map(x => `
-          <div>
-            <div class="t">${esc(x.title)}</div>
-            <div class="m">${x.created_at.slice(0,10)}</div>
-            <div>${esc(x.body || "")}</div>
+const notices =
+  (n.data || []).slice().sort((a, b) => {
+
+    if (
+      !!a.important !==
+      !!b.important
+    ) {
+      return a.important
+        ? -1
+        : 1;
+    }
+
+    return (
+      new Date(b.created_at) -
+      new Date(a.created_at)
+    );
+  });
+
+
+$("#noticeList").innerHTML =
+  notices.length
+
+    ? notices.map(x => `
+
+        <div>
+
+          <div class="t">
+
+            ${
+              x.important
+                ? `<span class="tag">
+                    중요
+                  </span>`
+                : ""
+            }
+
+            ${esc(x.title)}
+
           </div>
-        `).join("")
-      : '<div class="m">등록된 공지가 없습니다.</div>';
+
+          <div class="m">
+            ${x.created_at.slice(0,10)}
+          </div>
+
+          <div>
+            ${esc(x.body || "")}
+          </div>
+
+        </div>
+
+      `).join("")
+
+    : `
+      <div class="m">
+        등록된 공지가 없습니다.
+      </div>
+    `;
 
   renderKPI();
   renderDives();
@@ -1620,15 +1667,224 @@ async function(userId, nextRole) {
   renderAdmin();
 };
 
-
 async function saveNotice() {
-  const title = $("#ntTitle").value.trim();
-  if (!title) return;
-  const { error } = await sb.from("notices").insert({ title, body: $("#ntBody").value.trim() });
-  if (error) { alert("등록 실패: " + error.message); return; }
-  $("#ntTitle").value = ""; $("#ntBody").value = "";
+window.deleteNotice =
+async function(noticeId) {
+
+  if (PROFILE.role !== "admin") {
+    alert("관리자만 공지를 삭제할 수 있습니다.");
+    return;
+  }
+
+
+  if (!confirm("이 공지를 삭제할까요?")) {
+    return;
+  }
+
+
+  const { error } =
+    await sb
+      .from("notices")
+      .delete()
+      .eq("id", noticeId);
+
+
+  if (error) {
+    alert(
+      "공지 삭제 실패: " +
+      error.message
+    );
+    return;
+  }
+
+
   await loadAll();
+
+  renderAdminNotices();
+};
+   async function renderAdminNotices() {
+
+  if (PROFILE.role !== "admin") {
+    return;
+  }
+
+
+  const box =
+    $("#adminNoticeList");
+
+  if (!box) {
+    return;
+  }
+
+
+  const { data, error } =
+    await sb
+      .from("notices")
+      .select("*")
+      .order("important", {
+        ascending: false
+      })
+      .order("created_at", {
+        ascending: false
+      });
+
+
+  if (error) {
+
+    box.innerHTML =
+      `<div class="m">
+        공지를 불러오지 못했습니다.
+      </div>`;
+
+    return;
+  }
+
+
+  if (!data || !data.length) {
+
+    box.innerHTML =
+      `<div class="m">
+        등록된 공지가 없습니다.
+      </div>`;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    data.map(n => `
+
+      <div class="member-row">
+
+        <div>
+
+          <div class="t">
+
+            ${
+              n.important
+                ? `<span class="tag">
+                    중요
+                  </span>`
+                : ""
+            }
+
+            ${esc(n.title)}
+
+          </div>
+
+          <div class="m">
+            ${
+              String(
+                n.created_at || ""
+              ).slice(0, 10)
+            }
+          </div>
+
+          <div style="margin-top:6px">
+            ${esc(n.body || "")}
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <button
+            class="btn sm danger"
+            onclick="deleteNotice(${n.id})"
+          >
+            삭제
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
 }
+  if (PROFILE.role !== "admin") {
+    alert("관리자만 공지를 등록할 수 있습니다.");
+    return;
+  }
+
+  const title =
+    $("#ntTitle").value.trim();
+
+  const body =
+    $("#ntBody").value.trim();
+
+  const important =
+    $("#ntImportant")?.checked || false;
+
+  const msg =
+    $("#ntMsg");
+
+
+  if (!title) {
+
+    if (msg) {
+      msg.className = "msg err";
+      msg.textContent =
+        "공지 제목을 입력하세요.";
+    }
+
+    return;
+  }
+
+
+  const { error } =
+    await sb
+      .from("notices")
+      .insert({
+        title,
+        body,
+        important
+      });
+
+
+  if (error) {
+
+    if (msg) {
+      msg.className = "msg err";
+      msg.textContent =
+        "등록 실패: " + error.message;
+    }
+
+    return;
+  }
+
+
+  $("#ntTitle").value = "";
+  $("#ntBody").value = "";
+
+  if ($("#ntImportant")) {
+    $("#ntImportant").checked = false;
+  }
+
+
+  if (msg) {
+    msg.className = "msg ok";
+    msg.textContent =
+      "공지사항이 등록되었습니다.";
+  }
+
+
+  await loadAll();
+
+  if (PROFILE.role === "admin") {
+  if (diveBox) {
+    // 전체 기록 코드...
+  }
+
+  renderAdminNotices();
+}
+
+
+  setTimeout(() => {
+    if (msg) msg.textContent = "";
+  }, 2500);
+}
+
 
 async function exportCSV(table) {
   const { data, error } = await sb.from(table).select("*");
