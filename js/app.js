@@ -1682,7 +1682,7 @@ async function renderAdminNotices() {
         <div class="t">
           ${
             n.important
-              ? `<span class="tag">중요</span>`
+              ? `<span class="tag important-tag">중요</span>`
               : ""
           }
 
