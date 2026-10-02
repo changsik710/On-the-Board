@@ -277,9 +277,9 @@ $("#noticeList").innerHTML =
           <div class="t">
 
             ${
-              x.important
-                ? `<span class="tag">중요</span>`
-                : ""
+             x.important
+             ? `<span class="tag important-tag">중요</span>`
+             : ""
             }
 
             ${esc(x.title)}
