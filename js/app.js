@@ -11,6 +11,7 @@ let DIVES = [];         // 다이브 목록
 let FB = {};            // dive_id -> feedback[]
 let urlCache = {};      // 서명 URL 캐시
 let charts = {};
+let CHECKINS = [];
 
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -235,7 +236,7 @@ async function enterApp(user) {
 
 /* ---------- 데이터 로드 ---------- */
 async function loadAll() {
-  const [m, d, f, n] = await Promise.all([
+  const [m, d, f, n, c] = await Promise.all([
     sb.from("profiles").select("*").order("grade"),
     sb.from("dives").select("*")
       .order("dive_date", { ascending: false })
@@ -244,10 +245,15 @@ async function loadAll() {
     sb.from("notices").select("*")
       .order("created_at", { ascending: false })
       .limit(10)
+    sb.from("checkins")
+  .select("*")
+  .order("ck_date", { ascending: false })
+  .limit(300)
   ]);
 
   MEMBERS = m.data || [];
   DIVES = d.data || [];
+  CHECKINS = c.data || [];
 
   FB = {};
 
