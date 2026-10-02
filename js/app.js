@@ -573,7 +573,7 @@ async function loadTodayCheckin() {
   const { data } = await sb.from("checkins").select("*")
     .eq("user_id", ME.id).eq("ck_date", today).maybeSingle();
   if (!data) return;
-  $("#fatigue").value = data.fatigue ?? 3;
+$("#fatigue").value = data.fatigue ?? 3;
 $("#vFatigue").textContent = data.fatigue ?? 3;
 
 $("#pain").value = data.pain ?? 1;
@@ -594,11 +594,11 @@ async function saveCheckin() {
   const row = {
     user_id: ME.id, ck_date: new Date().toISOString().slice(0, 10),
    fatigue: Number($("#fatigue").value),
-pain: Number($("#pain").value),
-focus: Number($("#focus").value),
-mood: Number($("#mood").value),
-    tension: Number($("#tension").value), confidence: Number($("#confidence").value),
-    sleep_h: Number($("#sleep").value), note: $("#ckNote").value.trim()
+   pain: Number($("#pain").value),
+   focus: Number($("#focus").value),
+   mood: Number($("#mood").value),
+   tension: Number($("#tension").value), confidence: Number($("#confidence").value),
+   sleep_h: Number($("#sleep").value), note: $("#ckNote").value.trim()
   };
   const { error } = await sb.from("checkins").upsert(row, { onConflict: "user_id,ck_date" });
   const m = $("#ckMsg");
