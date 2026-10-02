@@ -932,9 +932,169 @@ async function loadCmp(side) {
   const v = await videoSrc(d);
   $("#vid" + side).src = v.src;
 }
+
+/* ============================================================
+   코치 · 관리자 : 오늘의 선수 컨디션
+   ============================================================ */
+
+function renderTeamConditions(targetId) {
+
+  const box =
+    document.getElementById(targetId);
+
+  if (!box) {
+    return;
+  }
+
+  const today =
+    new Date()
+      .toLocaleDateString("sv-SE");
+
+  const students =
+    MEMBERS.filter(
+      m => m.role === "student"
+    );
+
+  if (!students.length) {
+
+    box.innerHTML = `
+      <div class="m">
+        등록된 선수가 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+  box.innerHTML =
+    students.map(student => {
+
+      const ck =
+        CHECKINS.find(
+          x =>
+            x.user_id === student.id &&
+            x.ck_date === today
+        );
+
+      if (!ck) {
+
+        return `
+          <div class="condition-monitor-row">
+
+            <div class="condition-monitor-name">
+              <strong>${esc(student.name)}</strong>
+
+              ${
+                student.grade
+                  ? `<span class="tag">
+                      ${student.grade}학년
+                    </span>`
+                  : ""
+              }
+            </div>
+
+            <div class="m">
+              오늘 기록 없음
+            </div>
+
+          </div>
+        `;
+      }
+
+      const warning =
+        Number(ck.fatigue) >= 4 ||
+        Number(ck.pain) >= 3;
+
+      return `
+        <div class="condition-monitor-row">
+
+          <div class="condition-monitor-top">
+
+            <div>
+              <strong>${esc(student.name)}</strong>
+
+              ${
+                student.grade
+                  ? `<span class="tag">
+                      ${student.grade}학년
+                    </span>`
+                  : ""
+              }
+
+              ${
+                warning
+                  ? `<span class="tag condition-alert">
+                      확인 필요
+                    </span>`
+                  : ""
+              }
+            </div>
+
+            <div class="m">
+              ${esc(ck.ck_date || "")}
+            </div>
+
+          </div>
+
+          <div class="condition-monitor-values">
+
+            <div>
+              <span>피로도</span>
+              <strong>${ck.fatigue ?? "-"}/5</strong>
+            </div>
+
+            <div>
+              <span>통증</span>
+              <strong>${ck.pain ?? "-"}/5</strong>
+            </div>
+
+            <div>
+              <span>집중도</span>
+              <strong>${ck.focus ?? "-"}/5</strong>
+            </div>
+
+            <div>
+              <span>기분</span>
+              <strong>${ck.mood ?? "-"}/5</strong>
+            </div>
+
+            <div>
+              <span>긴장도</span>
+              <strong>${ck.tension ?? "-"}/10</strong>
+            </div>
+
+            <div>
+              <span>자신감</span>
+              <strong>${ck.confidence ?? "-"}/10</strong>
+            </div>
+
+            <div>
+              <span>수면</span>
+              <strong>${ck.sleep_h ?? "-"}h</strong>
+            </div>
+
+          </div>
+
+          ${
+            ck.note
+              ? `
+                <div class="condition-note">
+                  ${esc(ck.note)}
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+      `;
+
+    }).join("");
+}
+
 /* ============================================================
    코치 대시보드
    ============================================================ */
+
 
 function renderCoach() {
 
@@ -1231,6 +1391,7 @@ function renderCoach() {
         }).join("");
     }
   }
+renderTeamConditions("coachConditionList");
 }
 
 
@@ -1317,6 +1478,7 @@ function(diveId) {
     }
 
   }, 150);
+   
 };
 /* ---------- 관리자 ---------- */
 
@@ -1605,6 +1767,9 @@ function renderAdmin() {
   }
 
   renderAdminNotices();
+
+  renderTeamConditions("adminConditionList");
+} 
 }
 
 /* ============================================================
