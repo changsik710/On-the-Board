@@ -172,9 +172,83 @@
     </span>
   </label>
 
-  <label>
-    기분 상태
-    <b><span id="vMood">3</span>/5</b>
+ <div class="condition-grid">
+
+  <div class="condition-card">
+    <div class="condition-head">
+      <span>신체 피로도</span>
+      <strong><span id="vFatigue">3</span>/5</strong>
+    </div>
+
+    <input
+      type="range"
+      id="fatigue"
+      min="1"
+      max="5"
+      step="1"
+      value="3"
+      oninput="document.getElementById('vFatigue').textContent=this.value"
+    >
+
+    <div class="condition-scale">
+      <span>1 전혀 피곤하지 않음</span>
+      <span>5 매우 피곤함</span>
+    </div>
+  </div>
+
+
+  <div class="condition-card">
+    <div class="condition-head">
+      <span>통증 · 불편감</span>
+      <strong><span id="vPain">1</span>/5</strong>
+    </div>
+
+    <input
+      type="range"
+      id="pain"
+      min="1"
+      max="5"
+      step="1"
+      value="1"
+      oninput="document.getElementById('vPain').textContent=this.value"
+    >
+
+    <div class="condition-scale">
+      <span>1 없음</span>
+      <span>5 매우 불편함</span>
+    </div>
+  </div>
+
+
+  <div class="condition-card">
+    <div class="condition-head">
+      <span>집중도</span>
+      <strong><span id="vFocus">3</span>/5</strong>
+    </div>
+
+    <input
+      type="range"
+      id="focus"
+      min="1"
+      max="5"
+      step="1"
+      value="3"
+      oninput="document.getElementById('vFocus').textContent=this.value"
+    >
+
+    <div class="condition-scale">
+      <span>1 매우 낮음</span>
+      <span>5 매우 좋음</span>
+    </div>
+  </div>
+
+
+  <div class="condition-card">
+    <div class="condition-head">
+      <span>기분 상태</span>
+      <strong><span id="vMood">3</span>/5</strong>
+    </div>
+
     <input
       type="range"
       id="mood"
@@ -182,10 +256,16 @@
       max="5"
       step="1"
       value="3"
+      oninput="document.getElementById('vMood').textContent=this.value"
     >
-    <span class="m">
-      1 매우 좋지 않음 · 5 매우 좋음
-    </span>
+
+    <div class="condition-scale">
+      <span>1 매우 좋지 않음</span>
+      <span>5 매우 좋음</span>
+    </div>
+  </div>
+
+</div>
   </label>
 
 </div>
