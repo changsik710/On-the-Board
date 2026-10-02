@@ -262,7 +262,39 @@ async function loadAll() {
   MEMBERS = m.data || [];
   DIVES = d.data || [];
   CHECKINS = c.data || [];
+MEMBERS = m.data || [];
+DIVES = d.data || [];
+CHECKINS = c.data || [];
 
+
+/* 홈 선수 컨디션 선택 */
+const conditionStudent =
+  $("#homeConditionStudent");
+
+if (conditionStudent) {
+
+  conditionStudent.innerHTML =
+    `<option value="">전체 선수</option>` +
+
+    MEMBERS
+      .filter(m => m.role === "student")
+      .map(m => `
+        <option value="${m.id}">
+          ${esc(m.name)}
+        </option>
+      `)
+      .join("");
+
+  conditionStudent.onchange = () => {
+    renderTeamConditions(
+      "homeConditionList",
+      conditionStudent.value
+    );
+  };
+}
+
+
+FB = {};
   FB = {};
 
   (f.data || []).forEach(x => {
@@ -952,7 +984,10 @@ async function loadCmp(side) {
    코치 · 관리자 : 오늘의 선수 컨디션
    ============================================================ */
 
-function renderTeamConditions(targetId) {
+function renderTeamConditions(
+  targetId,
+  studentId = ""
+) {
 
   const box =
     document.getElementById(targetId);
@@ -965,10 +1000,17 @@ function renderTeamConditions(targetId) {
     new Date()
       .toLocaleDateString("sv-SE");
 
-  const students =
-    MEMBERS.filter(
-      m => m.role === "student"
+ let students =
+  MEMBERS.filter(
+    m => m.role === "student"
+  );
+
+if (studentId) {
+  students =
+    students.filter(
+      m => m.id === studentId
     );
+}
 
   if (!students.length) {
 
