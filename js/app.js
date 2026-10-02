@@ -1770,7 +1770,6 @@ function renderAdmin() {
 
   renderTeamConditions("adminConditionList");
 } 
-}
 
 /* ============================================================
    공지사항 관리
