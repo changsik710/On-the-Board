@@ -11,7 +11,6 @@ let DIVES = [];         // 다이브 목록
 let FB = {};            // dive_id -> feedback[]
 let urlCache = {};      // 서명 URL 캐시
 let charts = {};
-let adminUnlocked = false;
 
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -1249,52 +1248,378 @@ function(diveId) {
   }, 150);
 };
 /* ---------- 관리자 ---------- */
-async function sha256(t) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
 
-async function adminLogin() {
-  const msg = $("#adminMsg");
-  const { data, error } = await sb.from("app_config").select("admin_pw_hash").eq("id", 1).single();
-  if (error) { msg.className = "msg err"; msg.textContent = "설정을 불러오지 못했습니다."; return; }
-  const h = await sha256($("#adminPw").value);
-  if (h !== data.admin_pw_hash) { msg.className = "msg err"; msg.textContent = "비밀번호가 일치하지 않습니다."; return; }
-  if (PROFILE.role !== "admin") {
-    msg.className = "msg err";
-    msg.textContent = "비밀번호는 맞지만 이 계정에 관리자 권한이 없습니다. Supabase에서 role을 admin으로 지정하세요.";
-    return;
-  }
-  adminUnlocked = true;
-  $("#adminPw").value = "";
-  $("#adminLock").classList.add("hidden");
-  $("#adminBody").classList.remove("hidden");
-  renderAdmin();
-}
+/* ============================================================
+   관리자 대시보드
+   ============================================================ */
 
 function renderAdmin() {
-  $("#memberList").innerHTML = MEMBERS.map(m => `
-    <div><div class="t">${esc(m.name)} <span class="tag">${m.grade}학년</span>
-      <span class="tag">${m.role === "admin" ? "지도교사" : "선수"}</span></div>
-      <div class="m">기록 ${DIVES.filter(d => d.user_id === m.id).length}건</div>
-      <button class="btn sm" onclick="toggleRole('${m.id}','${m.role}')">
-        ${m.role === "admin" ? "선수로 변경" : "관리자로 변경"}</button></div>`).join("");
 
-  $("#adminDives").innerHTML = DIVES.slice(0, 60).map(d => {
-    const who = (MEMBERS.find(m => m.id === d.user_id) || {}).name || "-";
-    return `<div><div class="t">${esc(who)} · ${esc(d.dive_no || "-")} ${d.dd ? "DD " + d.dd : ""}</div>
-      <div class="m">${d.dive_date} · ${d.context === "competition" ? "대회" : "훈련"} · 피드백 ${(FB[d.id] || []).length}건</div>
-      <button class="btn sm danger" onclick="delDive(${d.id})">삭제</button></div>`;
-  }).join("");
+  if (PROFILE.role !== "admin") {
+    return;
+  }
+
+
+  /* -------------------------
+     관리자 KPI
+  ------------------------- */
+
+  const students =
+    MEMBERS.filter(m => m.role === "student");
+
+  const coaches =
+    MEMBERS.filter(m => m.role === "coach");
+
+  const admins =
+    MEMBERS.filter(m => m.role === "admin");
+
+  const adminKpi =
+    $("#adminKpi");
+
+
+  if (adminKpi) {
+
+    adminKpi.innerHTML = `
+
+      <div class="kpi">
+        <div class="k">선수</div>
+        <div class="v">${students.length}</div>
+        <div class="s">등록 선수</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">코치</div>
+        <div class="v">${coaches.length}</div>
+        <div class="s">등록 코치</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">전체 영상</div>
+        <div class="v">${DIVES.length}</div>
+        <div class="s">누적 영상</div>
+      </div>
+
+      <div class="kpi">
+        <div class="k">전체 피드백</div>
+        <div class="v">${Object.values(FB).flat().length}</div>
+        <div class="s">누적 피드백</div>
+      </div>
+
+    `;
+  }
+
+
+  /* -------------------------
+     선수 · 코치 · 관리자 관리
+  ------------------------- */
+
+  const memberBox =
+    $("#memberList");
+
+
+  if (memberBox) {
+
+    memberBox.innerHTML =
+      MEMBERS.map(m => {
+
+        const diveCount =
+          DIVES.filter(
+            d => d.user_id === m.id
+          ).length;
+
+        const roleText = {
+          student: "선수",
+          coach: "코치",
+          admin: "관리자"
+        }[m.role] || m.role;
+
+
+        const isMe =
+          m.id === ME.id;
+
+
+        return `
+
+          <div class="member-row">
+
+            <div>
+
+              <div class="t">
+
+                ${esc(m.name)}
+
+                <span class="tag">
+                  ${esc(roleText)}
+                </span>
+
+                ${
+                  isMe
+                    ? `<span class="tag">
+                        현재 계정
+                      </span>`
+                    : ""
+                }
+
+              </div>
+
+
+              <div class="m">
+
+                ${
+                  m.role === "student" && m.grade
+                    ? `${m.grade}학년 · `
+                    : ""
+                }
+
+                영상 ${diveCount}건
+
+              </div>
+
+            </div>
+
+
+            <div>
+
+              ${
+                isMe
+
+                ? `
+                  <select disabled>
+                    <option>
+                      관리자
+                    </option>
+                  </select>
+                `
+
+                : `
+                  <select
+                    onchange="
+                      changeRole(
+                        '${m.id}',
+                        this.value
+                      )
+                    "
+                  >
+
+                    <option
+                      value="student"
+                      ${
+                        m.role === "student"
+                          ? "selected"
+                          : ""
+                      }
+                    >
+                      선수
+                    </option>
+
+                    <option
+                      value="coach"
+                      ${
+                        m.role === "coach"
+                          ? "selected"
+                          : ""
+                      }
+                    >
+                      코치
+                    </option>
+
+                    <option
+                      value="admin"
+                      ${
+                        m.role === "admin"
+                          ? "selected"
+                          : ""
+                      }
+                    >
+                      관리자
+                    </option>
+
+                  </select>
+                `
+              }
+
+            </div>
+
+          </div>
+        `;
+
+      }).join("");
+  }
+
+
+  /* -------------------------
+     전체 기록 관리
+  ------------------------- */
+
+  const diveBox =
+    $("#adminDives");
+
+
+  if (diveBox) {
+
+    if (!DIVES.length) {
+
+      diveBox.innerHTML =
+        `<div class="m">
+          등록된 영상이 없습니다.
+        </div>`;
+
+    } else {
+
+      diveBox.innerHTML =
+        DIVES.slice(0, 60)
+          .map(d => {
+
+            const who =
+              MEMBERS.find(
+                m => m.id === d.user_id
+              )?.name || "-";
+
+
+            return `
+
+              <div>
+
+                <div class="t">
+
+                  ${esc(who)}
+
+                  ·
+
+                  ${esc(
+                    d.dive_no || "-"
+                  )}
+
+                  ${
+                    d.dd
+                      ? `· DD ${d.dd}`
+                      : ""
+                  }
+
+                </div>
+
+
+                <div class="m">
+
+                  ${esc(
+                    d.dive_date || ""
+                  )}
+
+                  ·
+
+                  ${
+                    d.context === "competition"
+                      ? "대회"
+                      : "훈련"
+                  }
+
+                  · 피드백
+                  ${(FB[d.id] || []).length}건
+
+                </div>
+
+
+                <button
+                  class="btn sm danger"
+                  onclick="delDive(${d.id})"
+                >
+                  삭제
+                </button>
+
+              </div>
+
+            `;
+
+          }).join("");
+    }
+  }
 }
 
-window.toggleRole = async (id, cur) => {
-  const next = cur === "admin" ? "student" : "admin";
-  if (!confirm(`권한을 ${next === "admin" ? "관리자" : "선수"}로 변경할까요?`)) return;
-  const { error } = await sb.from("profiles").update({ role: next }).eq("id", id);
-  if (error) { alert("변경 실패: " + error.message); return; }
-  await loadAll(); renderAdmin();
+
+
+/* ============================================================
+   관리자 : 역할 변경
+   ============================================================ */
+
+window.changeRole =
+async function(userId, nextRole) {
+
+  if (PROFILE.role !== "admin") {
+    alert("관리자만 역할을 변경할 수 있습니다.");
+    return;
+  }
+
+
+  if (userId === ME.id) {
+    alert("현재 로그인한 관리자 자신의 권한은 변경할 수 없습니다.");
+    return;
+  }
+
+
+  const target =
+    MEMBERS.find(
+      m => m.id === userId
+    );
+
+
+  if (!target) {
+    return;
+  }
+
+
+  const roleName = {
+    student: "선수",
+    coach: "코치",
+    admin: "관리자"
+  };
+
+
+  const ok =
+    confirm(
+      `${target.name}님의 역할을 ` +
+      `${roleName[nextRole]}(으)로 변경할까요?`
+    );
+
+
+  if (!ok) {
+    renderAdmin();
+    return;
+  }
+
+
+  const { error } =
+    await sb
+      .from("profiles")
+      .update({
+        role: nextRole
+      })
+      .eq("id", userId);
+
+
+  if (error) {
+
+    alert(
+      "역할 변경 실패: " +
+      error.message
+    );
+
+    renderAdmin();
+
+    return;
+  }
+
+
+  alert(
+    `${target.name}님의 역할이 ` +
+    `${roleName[nextRole]}(으)로 변경되었습니다.`
+  );
+
+
+  await loadAll();
+
+  renderAdmin();
 };
+
 
 async function saveNotice() {
   const title = $("#ntTitle").value.trim();
