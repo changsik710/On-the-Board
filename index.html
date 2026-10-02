@@ -122,28 +122,74 @@
     <p class="hint">
       오늘의 몸과 마음 상태를 기록합니다.
     </p>
+<div class="condition-grid">
 
-    <div class="routine" id="routineBox">
-      <label>
-        <input type="checkbox" id="r1">
-        <span>1. 호흡 정돈</span>
-      </label>
+  <label>
+    신체 피로도
+    <b><span id="vFatigue">3</span>/5</b>
+    <input
+      type="range"
+      id="fatigue"
+      min="1"
+      max="5"
+      step="1"
+      value="3"
+    >
+    <span class="m">
+      1 전혀 피곤하지 않음 · 5 매우 피곤함
+    </span>
+  </label>
 
-      <label>
-        <input type="checkbox" id="r2">
-        <span>2. 이미지 트레이닝</span>
-      </label>
+  <label>
+    통증/불편감
+    <b><span id="vPain">1</span>/5</b>
+    <input
+      type="range"
+      id="pain"
+      min="1"
+      max="5"
+      step="1"
+      value="1"
+    >
+    <span class="m">
+      1 없음 · 5 매우 불편함
+    </span>
+  </label>
 
-      <label>
-        <input type="checkbox" id="r3">
-        <span>3. 자기 암시어</span>
-      </label>
+  <label>
+    집중도
+    <b><span id="vFocus">3</span>/5</b>
+    <input
+      type="range"
+      id="focus"
+      min="1"
+      max="5"
+      step="1"
+      value="3"
+    >
+    <span class="m">
+      1 매우 낮음 · 5 매우 좋음
+    </span>
+  </label>
 
-      <label>
-        <input type="checkbox" id="r4">
-        <span>4. 동작 시작 신호</span>
-      </label>
-    </div>
+  <label>
+    기분 상태
+    <b><span id="vMood">3</span>/5</b>
+    <input
+      type="range"
+      id="mood"
+      min="1"
+      max="5"
+      step="1"
+      value="3"
+    >
+    <span class="m">
+      1 매우 좋지 않음 · 5 매우 좋음
+    </span>
+  </label>
+
+</div>
+   
 
     <div class="grid3">
 
