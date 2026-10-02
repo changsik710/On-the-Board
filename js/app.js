@@ -69,13 +69,34 @@ function bindUI() {
   $("#logoutBtn").onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
   $$("#tabs .tab").forEach(t => t.onclick = () => {
-    $$("#tabs .tab").forEach(x => x.classList.remove("active"));
-    t.classList.add("active");
-    $$(".panel").forEach(p => p.classList.add("hidden"));
-    $("#tab-" + t.dataset.tab).classList.remove("hidden");
-    if (t.dataset.tab === "growth") drawCharts();
-  });
 
+  $$("#tabs .tab").forEach(x =>
+    x.classList.remove("active")
+  );
+
+  t.classList.add("active");
+
+  $$(".panel").forEach(p =>
+    p.classList.add("hidden")
+  );
+
+  $("#tab-" + t.dataset.tab)
+    .classList.remove("hidden");
+
+
+  if (t.dataset.tab === "growth") {
+    drawCharts();
+  }
+
+  if (t.dataset.tab === "coach") {
+    renderCoach();
+  }
+
+  if (t.dataset.tab === "admin") {
+    renderAdmin();
+  }
+
+});
   // 슬라이더 표시값
   const pair = [["tension","vTension"],["confidence","vConf"],["sleep","vSleep"],
                 ["sTakeoff","vTake"],["sFlight","vFlight"],["sEntry","vEntry"]];
@@ -252,7 +273,18 @@ async function loadAll() {
   fillCmpSelect();
 
   if (PROFILE.role === "student") {
-    await loadTodayCheckin();
+  await loadTodayCheckin();
+  }
+
+  if (
+  PROFILE.role === "coach" ||
+  PROFILE.role === "admin"
+  ) {
+  renderCoach();
+  }
+
+  if (PROFILE.role === "admin") {
+  renderAdmin();
   }
 }
 
@@ -830,7 +862,392 @@ async function loadCmp(side) {
   const v = await videoSrc(d);
   $("#vid" + side).src = v.src;
 }
+/* ============================================================
+   코치 대시보드
+   ============================================================ */
 
+function renderCoach() {
+
+  if (
+    PROFILE.role !== "coach" &&
+    PROFILE.role !== "admin"
+  ) {
+    return;
+  }
+
+
+  /* -------------------------
+     선수 목록
+  ------------------------- */
+
+  const students =
+    MEMBERS.filter(
+      m => m.role === "student"
+    );
+
+
+  /* -------------------------
+     코치 KPI
+  ------------------------- */
+
+  const coachKpi =
+    $("#coachKpi");
+
+  if (coachKpi) {
+
+    const allFeedbacks =
+      Object.values(FB).flat();
+
+    const myFeedbacks =
+      allFeedbacks.filter(
+        f =>
+          f.role_label === "coach" &&
+          f.user_id === ME.id
+      );
+
+    coachKpi.innerHTML = `
+
+      <div class="kpi">
+        <div class="k">
+          전체 선수
+        </div>
+
+        <div class="v">
+          ${students.length}
+        </div>
+
+        <div class="s">
+          관리 대상 선수
+        </div>
+      </div>
+
+
+      <div class="kpi">
+        <div class="k">
+          전체 영상
+        </div>
+
+        <div class="v">
+          ${DIVES.length}
+        </div>
+
+        <div class="s">
+          등록 영상
+        </div>
+      </div>
+
+
+      <div class="kpi">
+        <div class="k">
+          내가 작성한 피드백
+        </div>
+
+        <div class="v">
+          ${myFeedbacks.length}
+        </div>
+
+        <div class="s">
+          누적 코치 피드백
+        </div>
+      </div>
+
+
+      <div class="kpi">
+        <div class="k">
+          피드백 없는 영상
+        </div>
+
+        <div class="v">
+          ${
+            DIVES.filter(
+              d =>
+                !(FB[d.id] || [])
+                  .some(
+                    f =>
+                      f.role_label === "coach"
+                  )
+            ).length
+          }
+        </div>
+
+        <div class="s">
+          확인 필요
+        </div>
+      </div>
+    `;
+  }
+
+
+  /* -------------------------
+     선수 목록
+  ------------------------- */
+
+  const memberBox =
+    $("#coachMemberList");
+
+  if (memberBox) {
+
+    if (!students.length) {
+
+      memberBox.innerHTML =
+        `<div class="m">
+          등록된 선수가 없습니다.
+        </div>`;
+
+    } else {
+
+      memberBox.innerHTML =
+        students.map(student => {
+
+          const studentDives =
+            DIVES.filter(
+              d =>
+                d.user_id === student.id
+            );
+
+          const coachFeedbackCount =
+            studentDives.reduce(
+              (sum, d) =>
+                sum +
+                (FB[d.id] || [])
+                  .filter(
+                    f =>
+                      f.role_label === "coach"
+                  ).length,
+              0
+            );
+
+
+          const latest =
+            studentDives.length
+              ? studentDives[0].dive_date
+              : "-";
+
+
+          return `
+
+            <div class="member-row">
+
+              <div>
+
+                <div class="t">
+                  ${esc(student.name)}
+                  ${
+                    student.grade
+                      ? `<span class="tag">
+                          ${student.grade}학년
+                        </span>`
+                      : ""
+                  }
+                </div>
+
+
+                <div class="m">
+                  영상 ${studentDives.length}개
+                  ·
+                  코치 피드백
+                  ${coachFeedbackCount}개
+                  ·
+                  최근 영상 ${latest}
+                </div>
+
+              </div>
+
+
+              <div>
+
+                <button
+                  class="btn sm primary"
+                  onclick="openStudentDives('${student.id}')"
+                >
+                  영상 보기
+                </button>
+
+              </div>
+
+            </div>
+          `;
+
+        }).join("");
+    }
+  }
+
+
+  /* -------------------------
+     최근 업로드 영상
+  ------------------------- */
+
+  const recentBox =
+    $("#coachRecentDives");
+
+  if (recentBox) {
+
+    const recent =
+      DIVES.slice(0, 10);
+
+
+    if (!recent.length) {
+
+      recentBox.innerHTML =
+        `<div class="m">
+          아직 등록된 영상이 없습니다.
+        </div>`;
+
+    } else {
+
+      recentBox.innerHTML =
+        recent.map(d => {
+
+          const student =
+            MEMBERS.find(
+              m => m.id === d.user_id
+            );
+
+          const fbCount =
+            (FB[d.id] || []).filter(
+              f =>
+                f.role_label === "coach"
+            ).length;
+
+
+          return `
+
+            <div>
+
+              <div class="t">
+
+                ${esc(
+                  student?.name || "선수"
+                )}
+
+                ·
+
+                ${esc(
+                  d.dive_no ||
+                  "기술번호 미입력"
+                )}
+
+              </div>
+
+
+              <div class="m">
+
+                ${esc(
+                  d.dive_date || ""
+                )}
+
+                ·
+
+                ${esc(
+                  d.apparatus || ""
+                )}
+
+                · 코치 피드백
+                ${fbCount}건
+
+              </div>
+
+
+              <button
+                class="btn sm"
+                onclick="openDiveFromCoach(${d.id})"
+              >
+                영상 · 피드백 보기
+              </button>
+
+            </div>
+          `;
+
+        }).join("");
+    }
+  }
+}
+
+
+
+/* ============================================================
+   코치 → 특정 선수 영상 보기
+   ============================================================ */
+
+window.openStudentDives =
+function(studentId) {
+
+  const select =
+    $("#fUser");
+
+  if (select) {
+    select.value =
+      studentId;
+  }
+
+
+  const feedTab =
+    $('.tab[data-tab="feed"]');
+
+  if (feedTab) {
+    feedTab.click();
+  }
+
+
+  renderDives();
+};
+
+
+
+/* ============================================================
+   코치 → 특정 영상 바로 보기
+   ============================================================ */
+
+window.openDiveFromCoach =
+function(diveId) {
+
+  const dive =
+    DIVES.find(
+      d => d.id === diveId
+    );
+
+  if (!dive)
+    return;
+
+
+  const select =
+    $("#fUser");
+
+  if (select) {
+    select.value =
+      dive.user_id;
+  }
+
+
+  const feedTab =
+    $('.tab[data-tab="feed"]');
+
+  if (feedTab) {
+    feedTab.click();
+  }
+
+
+  renderDives();
+
+
+  setTimeout(() => {
+
+    const target =
+      document.getElementById(
+        "dive-" + diveId
+      );
+
+    if (target) {
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }
+
+  }, 150);
+};
 /* ---------- 관리자 ---------- */
 async function sha256(t) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
