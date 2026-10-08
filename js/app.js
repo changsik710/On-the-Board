@@ -291,21 +291,27 @@ if (conditionStudent) {
       conditionStudent.value
     );
   };
- const conditionDate =
+const conditionDate =
   $("#homeConditionDate");
 
 if (conditionDate) {
 
-  conditionDate.value =
-    new Date().toLocaleDateString("sv-SE");
+  /* 처음 로그인했을 때만 오늘 날짜 */
+  if (!conditionDate.value) {
+    conditionDate.value =
+      new Date()
+        .toLocaleDateString("sv-SE");
+  }
 
   conditionDate.onchange = () => {
+
     renderTeamConditions(
       "homeConditionList",
       conditionStudent?.value || ""
     );
+
   };
-}  
+}
 }
 
 
@@ -1004,56 +1010,109 @@ function renderTeamConditions(
   studentId = ""
 ) {
 
+ async function renderTeamConditions(
+  targetId,
+  studentId = ""
+) {
+
   const box =
     document.getElementById(targetId);
 
-  if (!box) {
-    return;
+  if (!box) return;
+
+
+  /* 선택한 날짜 */
+  const dateInput =
+    document.getElementById("homeConditionDate");
+
+  const selectedDate =
+    dateInput?.value ||
+    new Date().toLocaleDateString("sv-SE");
+
+
+  /* 학생 목록 */
+  let students =
+    MEMBERS.filter(
+      m => m.role === "student"
+    );
+
+  if (studentId) {
+    students =
+      students.filter(
+        m => m.id === studentId
+      );
   }
 
- const selectedDate =
-  $("#homeConditionDate")?.value ||
-  new Date().toLocaleDateString("sv-SE");
-
- let students =
-  MEMBERS.filter(
-    m => m.role === "student"
-  );
-
-if (studentId) {
-  students =
-    students.filter(
-      m => m.id === studentId
-    );
-}
 
   if (!students.length) {
-
     box.innerHTML = `
       <div class="m">
         등록된 선수가 없습니다.
+      </div>
+    `;
+    return;
+  }
+
+
+  /* 선택 날짜의 기록을 Supabase에서 직접 조회 */
+  let query =
+    sb.from("checkins")
+      .select("*")
+      .eq("ck_date", selectedDate);
+
+
+  if (studentId) {
+    query =
+      query.eq("user_id", studentId);
+  }
+
+
+  const { data, error } =
+    await query;
+
+
+  if (error) {
+
+    console.error(
+      "컨디션 조회 실패:",
+      error
+    );
+
+    box.innerHTML = `
+      <div class="m">
+        컨디션 기록을 불러오지 못했습니다.
       </div>
     `;
 
     return;
   }
 
+
+  const records =
+    data || [];
+
+
   box.innerHTML =
     students.map(student => {
 
-const ck = CHECKINS.find(
-  x =>
-    x.user_id === student.id &&
-    x.ck_date === selectedDate
-);
+      const ck =
+        records.find(
+          x =>
+            x.user_id === student.id
+        );
 
+
+      /* 해당 날짜 기록 없음 */
       if (!ck) {
 
         return `
           <div class="condition-monitor-row">
 
             <div class="condition-monitor-name">
-              <strong>${esc(student.name)}</strong>
+
+              <strong>
+                ${esc(student.name)}
+              </strong>
 
               ${
                 student.grade
@@ -1062,19 +1121,22 @@ const ck = CHECKINS.find(
                     </span>`
                   : ""
               }
+
             </div>
 
             <div class="m">
-              오늘 기록 없음
+              ${selectedDate} 기록 없음
             </div>
 
           </div>
         `;
       }
 
+
       const warning =
         Number(ck.fatigue) >= 4 ||
         Number(ck.pain) >= 3;
+
 
       return `
         <div class="condition-monitor-row">
@@ -1082,7 +1144,10 @@ const ck = CHECKINS.find(
           <div class="condition-monitor-top">
 
             <div>
-              <strong>${esc(student.name)}</strong>
+
+              <strong>
+                ${esc(student.name)}
+              </strong>
 
               ${
                 student.grade
@@ -1099,6 +1164,7 @@ const ck = CHECKINS.find(
                     </span>`
                   : ""
               }
+
             </div>
 
             <div class="m">
@@ -1107,44 +1173,60 @@ const ck = CHECKINS.find(
 
           </div>
 
+
           <div class="condition-monitor-values">
 
             <div>
               <span>피로도</span>
-              <strong>${ck.fatigue ?? "-"}/5</strong>
+              <strong>
+                ${ck.fatigue ?? "-"}/5
+              </strong>
             </div>
 
             <div>
               <span>통증</span>
-              <strong>${ck.pain ?? "-"}/5</strong>
+              <strong>
+                ${ck.pain ?? "-"}/5
+              </strong>
             </div>
 
             <div>
               <span>집중도</span>
-              <strong>${ck.focus ?? "-"}/5</strong>
+              <strong>
+                ${ck.focus ?? "-"}/5
+              </strong>
             </div>
 
             <div>
               <span>기분</span>
-              <strong>${ck.mood ?? "-"}/5</strong>
+              <strong>
+                ${ck.mood ?? "-"}/5
+              </strong>
             </div>
 
             <div>
               <span>긴장도</span>
-              <strong>${ck.tension ?? "-"}/10</strong>
+              <strong>
+                ${ck.tension ?? "-"}/10
+              </strong>
             </div>
 
             <div>
               <span>자신감</span>
-              <strong>${ck.confidence ?? "-"}/10</strong>
+              <strong>
+                ${ck.confidence ?? "-"}/10
+              </strong>
             </div>
 
             <div>
               <span>수면</span>
-              <strong>${ck.sleep_h ?? "-"}h</strong>
+              <strong>
+                ${ck.sleep_h ?? "-"}h
+              </strong>
             </div>
 
           </div>
+
 
           ${
             ck.note
