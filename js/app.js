@@ -1005,11 +1005,6 @@ async function loadCmp(side) {
    코치 · 관리자 : 오늘의 선수 컨디션
    ============================================================ */
 
-function renderTeamConditions(
-  targetId,
-  studentId = ""
-) {
-
  async function renderTeamConditions(
   targetId,
   studentId = ""
