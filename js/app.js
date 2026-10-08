@@ -291,6 +291,21 @@ if (conditionStudent) {
       conditionStudent.value
     );
   };
+ const conditionDate =
+  $("#homeConditionDate");
+
+if (conditionDate) {
+
+  conditionDate.value =
+    new Date().toLocaleDateString("sv-SE");
+
+  conditionDate.onchange = () => {
+    renderTeamConditions(
+      "homeConditionList",
+      conditionStudent?.value || ""
+    );
+  };
+}  
 }
 
 
@@ -996,9 +1011,9 @@ function renderTeamConditions(
     return;
   }
 
-  const today =
-    new Date()
-      .toLocaleDateString("sv-SE");
+ const selectedDate =
+  $("#homeConditionDate")?.value ||
+  new Date().toLocaleDateString("sv-SE");
 
  let students =
   MEMBERS.filter(
@@ -1026,12 +1041,11 @@ if (studentId) {
   box.innerHTML =
     students.map(student => {
 
-      const ck =
-        CHECKINS.find(
-          x =>
-            x.user_id === student.id &&
-            x.ck_date === today
-        );
+const ck = CHECKINS.find(
+  x =>
+    x.user_id === student.id &&
+    x.ck_date === selectedDate
+);
 
       if (!ck) {
 
