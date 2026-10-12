@@ -397,11 +397,15 @@ $("#noticeList").innerHTML =
 
 
 
-  renderKPI();
-  renderDives();
-  fillCmpSelect();
+renderKPI();
+renderDives();
+fillCmpSelect();
 
- if (
+if (PROFILE.role === "student") {
+  renderRecentCoachFeedback();
+}
+
+if (
   PROFILE.role === "coach" ||
   PROFILE.role === "admin"
 ) {
@@ -652,6 +656,117 @@ function renderKPI() {
     `;
   }
 }
+function renderRecentCoachFeedback() {
+
+  const box =
+    $("#recentFeedbackList");
+
+  if (!box) return;
+
+  if (PROFILE.role !== "student") {
+    return;
+  }
+
+
+  /* 내가 올린 영상 ID */
+  const myDiveIds =
+    DIVES
+      .filter(d => d.user_id === ME.id)
+      .map(d => d.id);
+
+
+  /* 내 영상에 달린 코치 피드백만 모으기 */
+  const list =
+    Object.values(FB)
+      .flat()
+      .filter(f =>
+        myDiveIds.includes(f.dive_id) &&
+        f.role_label === "coach"
+      )
+      .sort((a, b) =>
+        new Date(b.created_at) -
+        new Date(a.created_at)
+      )
+      .slice(0, 5);
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+      <div class="m">
+        아직 코치 피드백이 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    list.map(f => {
+
+      const dive =
+        DIVES.find(
+          d => d.id === f.dive_id
+        );
+
+      const coach =
+        MEMBERS.find(
+          m => m.id === f.user_id
+        );
+
+
+      return `
+        <div class="member-row">
+
+          <div>
+
+            <div class="t">
+              ${esc(
+                dive?.dive_no ||
+                "기술번호 미입력"
+              )}
+
+              ${
+                dive?.dive_date
+                  ? ` · ${esc(dive.dive_date)}`
+                  : ""
+              }
+            </div>
+
+
+            <div class="m">
+              ${esc(
+                coach?.name ||
+                "코치"
+              )}
+
+              ${
+                f.tag
+                  ? ` · ${esc(f.tag)}`
+                  : ""
+              }
+
+              ${
+                f.ts_sec != null
+                  ? ` · ${Number(f.ts_sec).toFixed(1)}초`
+                  : ""
+              }
+            </div>
+
+
+            <div style="margin-top:6px;">
+              ${esc(f.body || "")}
+            </div>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+}
+
 /* ---------- 컨디션 체크인 ---------- */
 async function loadTodayCheckin() {
 
