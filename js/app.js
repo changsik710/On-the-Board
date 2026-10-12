@@ -115,6 +115,17 @@ function bindUI() {
   pair.forEach(([a,b]) => { const el = $("#"+a); if (el) el.oninput = () => $("#"+b).textContent = el.value; });
 
   $("#saveCheckin").onclick = saveCheckin;
+   const checkinDate =
+  $("#checkinDate");
+
+if (checkinDate) {
+
+  checkinDate.value =
+    new Date().toLocaleDateString("sv-SE");
+
+  checkinDate.onchange =
+    loadTodayCheckin;
+}
 
   $$("#srcSeg .seg-btn").forEach(b => b.onclick = () => {
     $$("#srcSeg .seg-btn").forEach(x => x.classList.remove("active"));
@@ -643,42 +654,186 @@ function renderKPI() {
 }
 /* ---------- 컨디션 체크인 ---------- */
 async function loadTodayCheckin() {
-  const today = new Date().toISOString().slice(0, 10);
-  const { data } = await sb.from("checkins").select("*")
-    .eq("user_id", ME.id).eq("ck_date", today).maybeSingle();
-  if (!data) return;
-$("#fatigue").value = data.fatigue ?? 3;
-$("#vFatigue").textContent = data.fatigue ?? 3;
 
-$("#pain").value = data.pain ?? 1;
-$("#vPain").textContent = data.pain ?? 1;
+  const date =
+    $("#checkinDate")?.value ||
+    new Date().toLocaleDateString("sv-SE");
 
-$("#focus").value = data.focus ?? 3;
-$("#vFocus").textContent = data.focus ?? 3;
 
-$("#mood").value = data.mood ?? 3;
-$("#vMood").textContent = data.mood ?? 3;
-  $("#tension").value = data.tension || 5;   $("#vTension").textContent = data.tension || 5;
-  $("#confidence").value = data.confidence || 5; $("#vConf").textContent = data.confidence || 5;
-  $("#sleep").value = data.sleep_h || 7;     $("#vSleep").textContent = data.sleep_h || 7;
-  $("#ckNote").value = data.note || "";
+  const { data, error } =
+    await sb
+      .from("checkins")
+      .select("*")
+      .eq("user_id", ME.id)
+      .eq("ck_date", date)
+      .maybeSingle();
+
+
+  if (error) {
+    console.error(
+      "컨디션 불러오기 실패:",
+      error
+    );
+    return;
+  }
+
+
+  /* 해당 날짜에 기록이 없으면 기본값으로 초기화 */
+  if (!data) {
+
+    $("#fatigue").value = 3;
+    $("#vFatigue").textContent = 3;
+
+    $("#pain").value = 1;
+    $("#vPain").textContent = 1;
+
+    $("#focus").value = 3;
+    $("#vFocus").textContent = 3;
+
+    $("#mood").value = 3;
+    $("#vMood").textContent = 3;
+
+    $("#tension").value = 5;
+    $("#vTension").textContent = 5;
+
+    $("#confidence").value = 5;
+    $("#vConf").textContent = 5;
+
+    $("#sleep").value = 7.5;
+    $("#vSleep").textContent = 7.5;
+
+    $("#ckNote").value = "";
+
+    return;
+  }
+
+
+  /* 기록이 있으면 그 날짜 기록 불러오기 */
+  $("#fatigue").value =
+    data.fatigue ?? 3;
+
+  $("#vFatigue").textContent =
+    data.fatigue ?? 3;
+
+
+  $("#pain").value =
+    data.pain ?? 1;
+
+  $("#vPain").textContent =
+    data.pain ?? 1;
+
+
+  $("#focus").value =
+    data.focus ?? 3;
+
+  $("#vFocus").textContent =
+    data.focus ?? 3;
+
+
+  $("#mood").value =
+    data.mood ?? 3;
+
+  $("#vMood").textContent =
+    data.mood ?? 3;
+
+
+  $("#tension").value =
+    data.tension ?? 5;
+
+  $("#vTension").textContent =
+    data.tension ?? 5;
+
+
+  $("#confidence").value =
+    data.confidence ?? 5;
+
+  $("#vConf").textContent =
+    data.confidence ?? 5;
+
+
+  $("#sleep").value =
+    data.sleep_h ?? 7.5;
+
+  $("#vSleep").textContent =
+    data.sleep_h ?? 7.5;
+
+
+  $("#ckNote").value =
+    data.note || "";
 }
 
 async function saveCheckin() {
+
+  const date =
+    $("#checkinDate")?.value ||
+    new Date().toLocaleDateString("sv-SE");
+
+
   const row = {
-    user_id: ME.id, ck_date: new Date().toISOString().slice(0, 10),
-   fatigue: Number($("#fatigue").value),
-   pain: Number($("#pain").value),
-   focus: Number($("#focus").value),
-   mood: Number($("#mood").value),
-   tension: Number($("#tension").value), confidence: Number($("#confidence").value),
-   sleep_h: Number($("#sleep").value), note: $("#ckNote").value.trim()
+
+    user_id: ME.id,
+
+    ck_date: date,
+
+    fatigue:
+      Number($("#fatigue").value),
+
+    pain:
+      Number($("#pain").value),
+
+    focus:
+      Number($("#focus").value),
+
+    mood:
+      Number($("#mood").value),
+
+    tension:
+      Number($("#tension").value),
+
+    confidence:
+      Number($("#confidence").value),
+
+    sleep_h:
+      Number($("#sleep").value),
+
+    note:
+      $("#ckNote").value.trim()
+
   };
-  const { error } = await sb.from("checkins").upsert(row, { onConflict: "user_id,ck_date" });
-  const m = $("#ckMsg");
-  m.className = error ? "msg inline err" : "msg inline ok";
-  m.textContent = error ? "저장 실패: " + error.message : "저장되었습니다.";
-  setTimeout(() => m.textContent = "", 2500);
+
+
+  const { error } =
+    await sb
+      .from("checkins")
+      .upsert(
+        row,
+        {
+          onConflict:
+            "user_id,ck_date"
+        }
+      );
+
+
+  const m =
+    $("#ckMsg");
+
+
+  m.className =
+    error
+      ? "msg inline err"
+      : "msg inline ok";
+
+
+  m.textContent =
+    error
+      ? "저장 실패: " + error.message
+      : `${date} 컨디션이 저장되었습니다.`;
+
+
+  setTimeout(
+    () => m.textContent = "",
+    2500
+  );
 }
 
 /* ---------- 다이브 등록 ---------- */
