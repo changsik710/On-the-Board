@@ -316,7 +316,6 @@
 </section>
 
 
-
 <!-- =========================================================
      학생 : 다이브 등록
 ========================================================= -->
@@ -329,6 +328,8 @@
       <span class="chip">A · Analysis</span>
     </h2>
 
+
+    <!-- 수행 정보 -->
     <div class="grid3">
 
       <div>
@@ -349,12 +350,14 @@
         <input
           type="text"
           id="dvComp"
-          placeholder="제55회 전국소년체육대회">
+          placeholder="제55회 전국소년체육대회"
+        >
       </div>
 
     </div>
 
 
+    <!-- 기술 정보 -->
     <div class="grid3">
 
       <div>
@@ -371,43 +374,47 @@
           <option>트램펄린</option>
           <option>지상훈련</option>
         </select>
-
       </div>
 
       <div>
         <label class="lbl">기술번호</label>
-        <input type="text" id="dvNo" placeholder="105B">
+        <input
+          type="text"
+          id="dvNo"
+          placeholder="105B"
+        >
       </div>
 
       <div>
         <label class="lbl">난이도 DD</label>
-      <div>
-  <label class="lbl">난이도 DD</label>
 
-  <input
-    type="number"
-    id="dvDD"
-    step="0.1"
-    min="1"
-    max="4.8"
-    placeholder="2.4"
-  >
-
-  <p class="hint">
-    난이도를 모르겠다면
-    <a
-      href="https://www.thediverguy.com/pages/diving-dd-chart-full-list-of-difficulties-on-all-boards"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      다이빙 DD 표에서 확인하기
-    </a>
-  </p>
-</div>
+        <input
+          type="number"
+          id="dvDD"
+          step="0.1"
+          min="1"
+          max="4.8"
+          placeholder="2.4"
+        >
+      </div>
 
     </div>
 
 
+    <!-- DD 난이도표 -->
+    <div style="margin-top:10px; margin-bottom:14px;">
+      <a
+        href="https://www.thediverguy.com/pages/diving-dd-chart-full-list-of-difficulties-on-all-boards"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn sm"
+      >
+        DD 난이도표 확인하기
+      </a>
+    </div>
+
+
+    <!-- 훈련 단계 -->
     <label class="lbl">훈련 단계</label>
 
     <select id="dvStage">
@@ -418,6 +425,7 @@
     </select>
 
 
+    <!-- 동작 분절 자기평가 -->
     <h3 class="sec">동작 분절 자기평가</h3>
 
     <div class="grid3">
@@ -426,45 +434,90 @@
         <label class="lbl">
           도약 <b id="vTake">5</b>
         </label>
-        <input type="range" id="sTakeoff" min="0" max="10" value="5">
+
+        <input
+          type="range"
+          id="sTakeoff"
+          min="0"
+          max="10"
+          value="5"
+        >
       </div>
 
       <div>
         <label class="lbl">
           회전·공중 <b id="vFlight">5</b>
         </label>
-        <input type="range" id="sFlight" min="0" max="10" value="5">
+
+        <input
+          type="range"
+          id="sFlight"
+          min="0"
+          max="10"
+          value="5"
+        >
       </div>
 
       <div>
         <label class="lbl">
           입수 <b id="vEntry">5</b>
         </label>
-        <input type="range" id="sEntry" min="0" max="10" value="5">
+
+        <input
+          type="range"
+          id="sEntry"
+          min="0"
+          max="10"
+          value="5"
+        >
       </div>
 
     </div>
 
 
+    <!-- 자기 성찰 -->
     <h3 class="sec">
       자기 성찰
       <span class="chip">O · Ownership</span>
     </h3>
 
-    <textarea id="rGood" rows="2" placeholder="잘된 점"></textarea>
-    <textarea id="rImprove" rows="2" placeholder="개선할 점"></textarea>
-    <textarea id="rGoal" rows="2" placeholder="다음 훈련 목표"></textarea>
+    <textarea
+      id="rGood"
+      rows="2"
+      placeholder="잘된 점"
+    ></textarea>
+
+    <textarea
+      id="rImprove"
+      rows="2"
+      placeholder="개선할 점"
+    ></textarea>
+
+    <textarea
+      id="rGoal"
+      rows="2"
+      placeholder="다음 훈련 목표"
+    ></textarea>
 
 
+    <!-- 영상 -->
     <h3 class="sec">영상</h3>
 
     <div class="seg" id="srcSeg">
 
-      <button class="seg-btn active" data-src="file">
+      <button
+        type="button"
+        class="seg-btn active"
+        data-src="file"
+      >
         파일 업로드
       </button>
 
-      <button class="seg-btn" data-src="link">
+      <button
+        type="button"
+        class="seg-btn"
+        data-src="link"
+      >
         외부 링크
       </button>
 
@@ -472,22 +525,37 @@
 
 
     <div id="srcFile">
-      <input type="file" id="dvFile" accept="video/*">
+      <input
+        type="file"
+        id="dvFile"
+        accept="video/*"
+      >
     </div>
+
 
     <div id="srcLink" class="hidden">
       <input
         type="url"
         id="dvUrl"
-        placeholder="https://youtu.be/...">
+        placeholder="https://youtu.be/..."
+      >
     </div>
 
 
-    <div class="progress hidden" id="upWrap">
+    <!-- 업로드 진행률 -->
+    <div
+      class="progress hidden"
+      id="upWrap"
+    >
       <div id="upBar"></div>
     </div>
 
-    <button id="submitDive" class="btn primary full">
+
+    <!-- 등록 -->
+    <button
+      id="submitDive"
+      class="btn primary full"
+    >
       등록하기
     </button>
 
