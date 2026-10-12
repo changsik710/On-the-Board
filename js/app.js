@@ -181,6 +181,16 @@ if (staffConditionHome) {
   if (checkin) {
     checkin.classList.toggle("hidden", role !== "student");
   }
+   // 학생 전용 최근 코치 피드백
+const recentFeedback =
+  $("#studentRecentFeedback");
+
+if (recentFeedback) {
+  recentFeedback.classList.toggle(
+    "hidden",
+    role !== "student"
+  );
+}
 
   // 영상 필터
   const filters = $("#feedFilters");
