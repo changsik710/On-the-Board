@@ -1209,298 +1209,572 @@ function mkChart(id, cfg) {
 }
 
 async function drawCharts() {
-  const mine = DIVES.filter(d => d.user_id === ME.id).slice().reverse();
 
-  // DD 추이 (월별 최고 난이도)
+  const mine =
+    DIVES
+      .filter(d => d.user_id === ME.id)
+      .slice()
+      .reverse();
+
+
+  /* =====================================================
+     1. DD 성장 추이
+  ===================================================== */
+
   const byMonth = {};
+
   mine.forEach(d => {
-    if (!d.dd) return;
-    const k = d.dive_date.slice(0, 7);
-    byMonth[k] = Math.max(byMonth[k] || 0, Number(d.dd));
+
+    if (!d.dd || !d.dive_date) return;
+
+    const k =
+      d.dive_date.slice(0, 7);
+
+    byMonth[k] =
+      Math.max(
+        byMonth[k] || 0,
+        Number(d.dd)
+      );
+
   });
-  const mk = Object.keys(byMonth).sort();
+
+
+  const mk =
+    Object.keys(byMonth).sort();
+
+
   mkChart("ddChart", {
+
     type: "line",
+
     data: {
+
       labels: mk,
-      datasets: [{
-        label: "월별 최고 DD", data: mk.map(k => byMonth[k]),
-        borderColor: "#1d4ed8", backgroundColor: "rgba(29,78,216,.08)",
-        fill: true, tension: .25, pointRadius: 4
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false,
-      scales: { y: { beginAtZero: false, title: { display: true, text: "DD" } } } }
-  });
 
-  // 분절 평균
-  const seg = ["s_takeoff", "s_flight", "s_entry"];
-  const labels = ["도약", "회전·공중", "입수"];
-  const half = Math.ceil(mine.length / 2);
-  const avg = (arr, k) => arr.length ? arr.reduce((a, b) => a + (b[k] || 0), 0) / arr.length : 0;
-  mkChart("segChart", {
-    type: "bar",
-    data: {
-      labels,
       datasets: [
-        { label: "초기 절반", data: seg.map(k => avg(mine.slice(0, half), k).toFixed(2)), backgroundColor: "#93b4f5" },
-        { label: "최근 절반", data: seg.map(k => avg(mine.slice(half), k).toFixed(2)), backgroundColor: "#1d4ed8" }
+        {
+          label: "월별 최고 DD",
+          data:
+            mk.map(k => byMonth[k]),
+          pointRadius: 4,
+          tension: 0.25
+        }
       ]
+
     },
-    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } } }
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+
   });
 
- /* ============================================================
-   컨디션 추세
-   ============================================================ */
 
-const { data: cks } =
-  await sb
-    .from("checkins")
-    .select("*")
-    .eq("user_id", ME.id)
-    .order("ck_date", { ascending: true })
-    .limit(90);
 
-const c =
-  cks || [];
+  /* =====================================================
+     2. 동작 분절 평균
+  ===================================================== */
 
-const conditionLabels =
-  c.map(x =>
-    x.ck_date
-      ? x.ck_date.slice(5)
-      : ""
+  const seg =
+    [
+      "s_takeoff",
+      "s_flight",
+      "s_entry"
+    ];
+
+
+  const labels =
+    [
+      "도약",
+      "회전·공중",
+      "입수"
+    ];
+
+
+  const half =
+    Math.ceil(
+      mine.length / 2
+    );
+
+
+  const avg =
+    (arr, key) => {
+
+      if (!arr.length)
+        return 0;
+
+      return (
+        arr.reduce(
+          (sum, d) =>
+            sum +
+            (Number(d[key]) || 0),
+          0
+        )
+        /
+        arr.length
+      );
+
+    };
+
+
+  mkChart("segChart", {
+
+    type: "bar",
+
+    data: {
+
+      labels,
+
+      datasets: [
+
+        {
+          label: "초기 절반",
+          data:
+            seg.map(k =>
+              Number(
+                avg(
+                  mine.slice(
+                    0,
+                    half
+                  ),
+                  k
+                ).toFixed(2)
+              )
+            )
+        },
+
+        {
+          label: "최근 절반",
+          data:
+            seg.map(k =>
+              Number(
+                avg(
+                  mine.slice(
+                    half
+                  ),
+                  k
+                ).toFixed(2)
+              )
+            )
+        }
+
+      ]
+
+    },
+
+    options: {
+
+      responsive: true,
+      maintainAspectRatio: false,
+
+      scales: {
+        y: {
+          min: 0,
+          max: 10
+        }
+      }
+
+    }
+
+  });
+
+
+
+  /* =====================================================
+     3. 컨디션 데이터 불러오기
+  ===================================================== */
+
+  const { data: cks, error } =
+    await sb
+      .from("checkins")
+      .select("*")
+      .eq("user_id", ME.id)
+      .order(
+        "ck_date",
+        {
+          ascending: true
+        }
+      )
+      .limit(90);
+
+
+  if (error) {
+
+    console.error(
+      "성장분석 컨디션 조회 실패:",
+      error
+    );
+
+    return;
+  }
+
+
+  const c =
+    cks || [];
+
+
+  const conditionLabels =
+    c.map(x =>
+      x.ck_date
+        ? x.ck_date.slice(5)
+        : ""
+    );
+
+
+
+  /* =====================================================
+     4. 피로도
+  ===================================================== */
+
+  mkChart(
+    "fatigueChart",
+    {
+
+      type: "line",
+
+      data: {
+
+        labels: conditionLabels,
+
+        datasets: [
+          {
+            label: "피로도",
+            data:
+              c.map(x =>
+                x.fatigue ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+
+      },
+
+      options: {
+
+        responsive: true,
+        maintainAspectRatio: false,
+
+        scales: {
+          y: {
+            min: 1,
+            max: 5,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+
+      }
+
+    }
   );
 
 
-/* -------------------------
-   피로도 · 통증
-------------------------- */
 
-mkChart("bodyConditionChart", {
+  /* =====================================================
+     5. 통증
+  ===================================================== */
 
-  type: "line",
+  mkChart(
+    "painChart",
+    {
 
-  data: {
+      type: "line",
 
-    labels: conditionLabels,
+      data: {
 
-    datasets: [
+        labels: conditionLabels,
 
-      {
-        label: "피로도",
-        data:
-          c.map(x =>
-            x.fatigue ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
+        datasets: [
+          {
+            label: "통증",
+            data:
+              c.map(x =>
+                x.pain ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+
       },
 
-      {
-        label: "통증",
-        data:
-          c.map(x =>
-            x.pain ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
-      }
+      options: {
 
-    ]
-  },
+        responsive: true,
+        maintainAspectRatio: false,
 
-  options: {
-
-    responsive: true,
-    maintainAspectRatio: false,
-
-    scales: {
-
-      y: {
-        min: 1,
-        max: 5,
-        ticks: {
-          stepSize: 1
+        scales: {
+          y: {
+            min: 1,
+            max: 5,
+            ticks: {
+              stepSize: 1
+            }
+          }
         }
+
       }
 
     }
-
-  }
-
-});
+  );
 
 
-/* -------------------------
-   집중도 · 기분
-------------------------- */
 
-mkChart("mentalConditionChart", {
+  /* =====================================================
+     6. 집중도
+  ===================================================== */
 
-  type: "line",
+  mkChart(
+    "focusChart",
+    {
 
-  data: {
+      type: "line",
 
-    labels: conditionLabels,
+      data: {
 
-    datasets: [
+        labels: conditionLabels,
 
-      {
-        label: "집중도",
-        data:
-          c.map(x =>
-            x.focus ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
+        datasets: [
+          {
+            label: "집중도",
+            data:
+              c.map(x =>
+                x.focus ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+
       },
 
-      {
-        label: "기분",
-        data:
-          c.map(x =>
-            x.mood ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
-      }
+      options: {
 
-    ]
-  },
+        responsive: true,
+        maintainAspectRatio: false,
 
-  options: {
-
-    responsive: true,
-    maintainAspectRatio: false,
-
-    scales: {
-
-      y: {
-        min: 1,
-        max: 5,
-        ticks: {
-          stepSize: 1
+        scales: {
+          y: {
+            min: 1,
+            max: 5,
+            ticks: {
+              stepSize: 1
+            }
+          }
         }
+
       }
 
     }
-
-  }
-
-});
+  );
 
 
-/* -------------------------
-   긴장도 · 자신감
-------------------------- */
 
-mkChart("psyChart", {
+  /* =====================================================
+     7. 기분
+  ===================================================== */
 
-  type: "line",
+  mkChart(
+    "moodChart",
+    {
 
-  data: {
+      type: "line",
 
-    labels: conditionLabels,
+      data: {
 
-    datasets: [
+        labels: conditionLabels,
 
-      {
-        label: "긴장도",
-        data:
-          c.map(x =>
-            x.tension ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
+        datasets: [
+          {
+            label: "기분",
+            data:
+              c.map(x =>
+                x.mood ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+
       },
 
-      {
-        label: "자신감",
-        data:
-          c.map(x =>
-            x.confidence ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
-      }
+      options: {
 
-    ]
-  },
+        responsive: true,
+        maintainAspectRatio: false,
 
-  options: {
-
-    responsive: true,
-    maintainAspectRatio: false,
-
-    scales: {
-
-      y: {
-        min: 1,
-        max: 10,
-        ticks: {
-          stepSize: 1
+        scales: {
+          y: {
+            min: 1,
+            max: 5,
+            ticks: {
+              stepSize: 1
+            }
+          }
         }
+
       }
 
     }
-
-  }
-
-});
+  );
 
 
-/* -------------------------
-   수면시간
-------------------------- */
 
-mkChart("sleepChart", {
+  /* =====================================================
+     8. 긴장도
+  ===================================================== */
 
-  type: "line",
+  mkChart(
+    "tensionChart",
+    {
 
-  data: {
+      type: "line",
 
-    labels: conditionLabels,
+      data: {
 
-    datasets: [
+        labels: conditionLabels,
 
-      {
-        label: "수면시간",
-        data:
-          c.map(x =>
-            x.sleep_h ?? null
-          ),
-        pointRadius: 3,
-        tension: 0.25,
-        spanGaps: true
-      }
+        datasets: [
+          {
+            label: "긴장도",
+            data:
+              c.map(x =>
+                x.tension ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
 
-    ]
-  },
+      },
 
-  options: {
+      options: {
 
-    responsive: true,
-    maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: false,
 
-    scales: {
+        scales: {
+          y: {
+            min: 1,
+            max: 10,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
 
-      y: {
-        min: 3,
-        max: 12
       }
 
     }
+  );
 
-  }
 
-});
+
+  /* =====================================================
+     9. 자신감
+  ===================================================== */
+
+  mkChart(
+    "confidenceChart",
+    {
+
+      type: "line",
+
+      data: {
+
+        labels: conditionLabels,
+
+        datasets: [
+          {
+            label: "자신감",
+            data:
+              c.map(x =>
+                x.confidence ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+
+      },
+
+      options: {
+
+        responsive: true,
+        maintainAspectRatio: false,
+
+        scales: {
+          y: {
+            min: 1,
+            max: 10,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+
+      }
+
+    }
+  );
+
+
+
+  /* =====================================================
+     10. 수면시간
+  ===================================================== */
+
+  mkChart(
+    "sleepChart",
+    {
+
+      type: "line",
+
+      data: {
+
+        labels: conditionLabels,
+
+        datasets: [
+          {
+            label: "수면시간",
+            data:
+              c.map(x =>
+                x.sleep_h ?? null
+              ),
+            pointRadius: 4,
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+
+      },
+
+      options: {
+
+        responsive: true,
+        maintainAspectRatio: false,
+
+        scales: {
+          y: {
+            min: 3,
+            max: 12
+          }
+        }
+
+      }
+
+    }
+  );
+
 }
 
 function fillCmpSelect() {
