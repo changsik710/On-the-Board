@@ -730,7 +730,6 @@
 </div>
  
 
-
 <!-- =========================================================
      코치 화면
 ========================================================= -->
@@ -748,19 +747,96 @@
 
 
   <div class="grid4" id="coachKpi"></div>
-     
+
+
+  <!-- 오늘의 선수 컨디션 -->
   <div class="card">
 
-  <h2>오늘의 선수 컨디션</h2>
+    <h2>오늘의 선수 컨디션</h2>
 
-  <p class="hint">
-    선수들이 오늘 기록한 몸과 마음 상태를 확인합니다.
-  </p>
+    <p class="hint">
+      선수들이 오늘 기록한 몸과 마음 상태를 확인합니다.
+    </p>
 
-  <div id="coachConditionList"></div>
+    <div id="coachConditionList"></div>
 
-</div>
+  </div>
 
+
+  <!-- 코치 : 선수 컨디션 추세 -->
+  <div class="card">
+
+    <h2>선수 컨디션 추세</h2>
+
+    <p class="hint">
+      선수를 선택하면 최근 컨디션 변화 추세를 확인할 수 있습니다.
+    </p>
+
+    <label class="lbl">선수 선택</label>
+
+    <select id="coachTrendStudent">
+      <option value="">선수를 선택하세요</option>
+    </select>
+
+  </div>
+
+
+  <!-- 선택한 선수 추세 그래프 -->
+  <div id="coachTrendCharts" class="hidden">
+
+    <div class="card">
+      <h2>피로도 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachFatigueChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>통증 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachPainChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>집중도 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachFocusChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>기분 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachMoodChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>긴장도 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachTensionChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>자신감 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachConfidenceChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>수면시간 변화</h2>
+      <div class="chart-box">
+        <canvas id="coachSleepChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- 선수 목록 -->
   <div class="card">
 
     <h2>선수 목록</h2>
@@ -770,6 +846,7 @@
   </div>
 
 
+  <!-- 최근 업로드 영상 -->
   <div class="card">
 
     <h2>최근 업로드 영상</h2>
@@ -779,8 +856,6 @@
   </div>
 
 </section>
-
-
 
 <!-- =========================================================
      관리자 화면
@@ -799,20 +874,96 @@
 
 
   <div class="grid4" id="adminKpi"></div>
-     
+
+
+  <!-- 오늘의 선수 컨디션 -->
   <div class="card">
 
-  <h2>오늘의 선수 컨디션</h2>
+    <h2>오늘의 선수 컨디션</h2>
 
-  <p class="hint">
-    전체 선수의 오늘 컨디션 기록을 확인합니다.
-  </p>
+    <p class="hint">
+      전체 선수의 오늘 컨디션 기록을 확인합니다.
+    </p>
 
-  <div id="adminConditionList"></div>
+    <div id="adminConditionList"></div>
 
-</div>
+  </div>
 
-  <!-- 부원 / 코치 관리 -->
+
+  <!-- 관리자 : 선수 컨디션 추세 -->
+  <div class="card">
+
+    <h2>선수 컨디션 추세</h2>
+
+    <p class="hint">
+      선수를 선택하면 최근 컨디션 변화 추세를 확인할 수 있습니다.
+    </p>
+
+    <label class="lbl">선수 선택</label>
+
+    <select id="adminTrendStudent">
+      <option value="">선수를 선택하세요</option>
+    </select>
+
+  </div>
+
+
+  <!-- 선택한 선수 추세 그래프 -->
+  <div id="adminTrendCharts" class="hidden">
+
+    <div class="card">
+      <h2>피로도 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminFatigueChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>통증 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminPainChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>집중도 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminFocusChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>기분 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminMoodChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>긴장도 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminTensionChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>자신감 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminConfidenceChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>수면시간 변화</h2>
+      <div class="chart-box">
+        <canvas id="adminSleepChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- 선수 · 코치 관리 -->
   <div class="card">
 
     <h2>선수 · 코치 관리</h2>
@@ -822,7 +973,7 @@
   </div>
 
 
-  <!-- 공지 -->
+  <!-- 공지사항 관리 -->
   <div class="card">
 
     <h2>공지사항 관리</h2>
@@ -832,40 +983,58 @@
     <input
       type="text"
       id="ntTitle"
-      placeholder="공지 제목">
+      placeholder="공지 제목"
+    >
 
     <label class="lbl">내용</label>
 
     <textarea
       id="ntBody"
       rows="5"
-      placeholder="공지 내용을 입력하세요."></textarea>
+      placeholder="공지 내용을 입력하세요."
+    ></textarea>
 
     <div class="notice-options">
 
       <label>
-        <input type="checkbox" id="ntImportant">
+        <input
+          type="checkbox"
+          id="ntImportant"
+        >
         중요 공지
       </label>
 
     </div>
 
-    <button id="ntSave" class="btn primary">
+    <button
+      id="ntSave"
+      class="btn primary"
+    >
       공지 등록
     </button>
 
-    <p id="ntMsg" class="msg"></p>
+    <p
+      id="ntMsg"
+      class="msg"
+    ></p>
+
     <hr style="margin:24px 0">
 
     <h3>등록된 공지</h3>
 
-    <div id="adminNoticeList" class="list">
-    <div class="m">등록된 공지가 없습니다.</div>
+    <div
+      id="adminNoticeList"
+      class="list"
+    >
+      <div class="m">
+        등록된 공지가 없습니다.
+      </div>
     </div>
+
   </div>
 
 
-  <!-- 데이터 -->
+  <!-- 데이터 내보내기 -->
   <div class="card">
 
     <h2>데이터 내보내기</h2>
@@ -876,15 +1045,24 @@
 
     <div class="row">
 
-      <button id="expDives" class="btn">
+      <button
+        id="expDives"
+        class="btn"
+      >
         다이브 기록 CSV
       </button>
 
-      <button id="expFb" class="btn">
+      <button
+        id="expFb"
+        class="btn"
+      >
         피드백 CSV
       </button>
 
-      <button id="expCk" class="btn">
+      <button
+        id="expCk"
+        class="btn"
+      >
         컨디션 CSV
       </button>
 
@@ -893,12 +1071,15 @@
   </div>
 
 
-  <!-- 전체 기록 -->
+  <!-- 전체 기록 관리 -->
   <div class="card">
 
     <h2>전체 기록 관리</h2>
 
-    <div id="adminDives" class="list"></div>
+    <div
+      id="adminDives"
+      class="list"
+    ></div>
 
   </div>
 
@@ -917,7 +1098,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/config.js"></script>
-<script src="js/app.js?v=20261008-141"></script>
+<script src="js/app.js?v=20261008-145"></script>
                                         
 </body>
 </html>
