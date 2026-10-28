@@ -790,12 +790,12 @@ const PERFORMANCE_GROUPS = [
   {
     apparatus: "springboard_1m",
     title: "1m 스프링보드",
-    groups: [1, 2, 3, 4, 5]
+    groups: [1, 2, 3, 4, 5, 6]
   },
   {
     apparatus: "springboard_3m",
     title: "3m 스프링보드",
-    groups: [1, 2, 3, 4, 5]
+    groups: [1, 2, 3, 4, 5, 6]
   },
   {
     apparatus: "platform",
