@@ -957,25 +957,26 @@ function renderSkillEditor(
 
 function setupPerformanceManager(prefix) {
 
-  const select =
-    document.getElementById(
-      prefix + "PerformanceStudent"
-    );
+const select =
+  document.getElementById(
+    prefix + "PerformanceStudent"
+  );
 
-  const editor =
-    document.getElementById(
-      prefix + "PerformanceEditor"
-    );
-
-  if (!select || !editor) {
-    return;
-  }
+if (!select) {
+  return;
+}
 
 
-  const students =
-    MEMBERS.filter(
-      m => m.role === "student"
-    );
+const editor =
+  document.getElementById(
+    prefix + "PerformanceEditor"
+  );
+
+
+const students =
+  MEMBERS.filter(
+    m => m.role === "student"
+  );
 
 
   const oldValue =
@@ -1000,6 +1001,15 @@ function setupPerformanceManager(prefix) {
       `)
       .join("");
 
+   if (!editor) {
+
+  console.error(
+    prefix +
+    "PerformanceEditor를 찾을 수 없습니다."
+  );
+
+  return;
+}
 
   if (
     oldValue &&
