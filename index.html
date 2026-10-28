@@ -673,124 +673,62 @@
 
   </div>
 
-
-   <!-- 컨디션 변화 -->
+<!-- 피로도 -->
 <div class="card">
-
-  <h2>
-    컨디션 변화
-    <span class="chip">B · Balance</span>
-  </h2>
-
-  <p class="hint">
-    날짜별 피로도와 통증 변화를 확인합니다.
-  </p>
-
+  <h2>피로도 변화</h2>
   <div class="chart-box">
-    <canvas id="bodyConditionChart"></canvas>
+    <canvas id="fatigueChart"></canvas>
   </div>
-
 </div>
 
-
-<!-- 집중 · 기분 변화 -->
+<!-- 통증 -->
 <div class="card">
-
-  <h2>
-    집중도 · 기분 변화
-    <span class="chip">R · Resilience</span>
-  </h2>
-
-  <p class="hint">
-    훈련 컨디션의 심리 변화를 확인합니다.
-  </p>
-
+  <h2>통증 변화</h2>
   <div class="chart-box">
-    <canvas id="mentalConditionChart"></canvas>
+    <canvas id="painChart"></canvas>
   </div>
-
 </div>
 
-
-<!-- 긴장 · 자신감 변화 -->
+<!-- 집중도 -->
 <div class="card">
-
-  <h2>
-    긴장도 · 자신감 변화
-    <span class="chip">R · Resilience</span>
-  </h2>
-
+  <h2>집중도 변화</h2>
   <div class="chart-box">
-    <canvas id="psyChart"></canvas>
+    <canvas id="focusChart"></canvas>
   </div>
-
 </div>
 
-
-<!-- 수면 변화 -->
+<!-- 기분 -->
 <div class="card">
+  <h2>기분 변화</h2>
+  <div class="chart-box">
+    <canvas id="moodChart"></canvas>
+  </div>
+</div>
 
+<!-- 긴장도 -->
+<div class="card">
+  <h2>긴장도 변화</h2>
+  <div class="chart-box">
+    <canvas id="tensionChart"></canvas>
+  </div>
+</div>
+
+<!-- 자신감 -->
+<div class="card">
+  <h2>자신감 변화</h2>
+  <div class="chart-box">
+    <canvas id="confidenceChart"></canvas>
+  </div>
+</div>
+
+<!-- 수면시간 -->
+<div class="card">
   <h2>수면시간 변화</h2>
-
-  <p class="hint">
-    날짜별 수면시간을 확인합니다.
-  </p>
-
   <div class="chart-box">
     <canvas id="sleepChart"></canvas>
   </div>
-
 </div>
-
-  <div class="card">
-
-    <h2>영상 비교 보기</h2>
-
-    <p class="hint">
-      초기 수행과 최근 수행을 비교합니다.
-    </p>
-
-    <div class="grid2">
-
-      <select id="cmpA">
-        <option value="">초기 영상 선택</option>
-      </select>
-
-      <select id="cmpB">
-        <option value="">최근 영상 선택</option>
-      </select>
-
-    </div>
-
-
-    <div class="grid2 cmp">
-
-      <video id="vidA" controls playsinline></video>
-      <video id="vidB" controls playsinline></video>
-
-    </div>
-
-
-    <div class="row">
-
-      <button id="cmpPlay" class="btn">
-        동시 재생 / 정지
-      </button>
-
-      <button id="cmpSlow" class="btn ghost">
-        0.25배속
-      </button>
-
-      <button id="cmpReset" class="btn ghost">
-        처음으로
-      </button>
-
-    </div>
-
-  </div>
-
-</section>
-
+ 
 
 
 <!-- =========================================================
@@ -979,7 +917,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/config.js"></script>
-<script src="js/app.js?v=20261008-140"></script>
+<script src="js/app.js?v=20261008-141"></script>
                                         
 </body>
 </html>
