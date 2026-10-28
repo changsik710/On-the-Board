@@ -1250,21 +1250,257 @@ async function drawCharts() {
     options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } } }
   });
 
-  // 심리 변화
-  const { data: cks } = await sb.from("checkins").select("*")
-    .eq("user_id", ME.id).order("ck_date").limit(90);
-  const c = cks || [];
-  mkChart("psyChart", {
-    type: "line",
-    data: {
-      labels: c.map(x => x.ck_date.slice(5)),
-      datasets: [
-        { label: "긴장도", data: c.map(x => x.tension), borderColor: "#b45309", pointRadius: 2, tension: .25 },
-        { label: "자신감", data: c.map(x => x.confidence), borderColor: "#15803d", pointRadius: 2, tension: .25 }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } } }
-  });
+ /* ============================================================
+   컨디션 추세
+   ============================================================ */
+
+const { data: cks } =
+  await sb
+    .from("checkins")
+    .select("*")
+    .eq("user_id", ME.id)
+    .order("ck_date", { ascending: true })
+    .limit(90);
+
+const c =
+  cks || [];
+
+const conditionLabels =
+  c.map(x =>
+    x.ck_date
+      ? x.ck_date.slice(5)
+      : ""
+  );
+
+
+/* -------------------------
+   피로도 · 통증
+------------------------- */
+
+mkChart("bodyConditionChart", {
+
+  type: "line",
+
+  data: {
+
+    labels: conditionLabels,
+
+    datasets: [
+
+      {
+        label: "피로도",
+        data:
+          c.map(x =>
+            x.fatigue ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      },
+
+      {
+        label: "통증",
+        data:
+          c.map(x =>
+            x.pain ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      }
+
+    ]
+  },
+
+  options: {
+
+    responsive: true,
+    maintainAspectRatio: false,
+
+    scales: {
+
+      y: {
+        min: 1,
+        max: 5,
+        ticks: {
+          stepSize: 1
+        }
+      }
+
+    }
+
+  }
+
+});
+
+
+/* -------------------------
+   집중도 · 기분
+------------------------- */
+
+mkChart("mentalConditionChart", {
+
+  type: "line",
+
+  data: {
+
+    labels: conditionLabels,
+
+    datasets: [
+
+      {
+        label: "집중도",
+        data:
+          c.map(x =>
+            x.focus ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      },
+
+      {
+        label: "기분",
+        data:
+          c.map(x =>
+            x.mood ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      }
+
+    ]
+  },
+
+  options: {
+
+    responsive: true,
+    maintainAspectRatio: false,
+
+    scales: {
+
+      y: {
+        min: 1,
+        max: 5,
+        ticks: {
+          stepSize: 1
+        }
+      }
+
+    }
+
+  }
+
+});
+
+
+/* -------------------------
+   긴장도 · 자신감
+------------------------- */
+
+mkChart("psyChart", {
+
+  type: "line",
+
+  data: {
+
+    labels: conditionLabels,
+
+    datasets: [
+
+      {
+        label: "긴장도",
+        data:
+          c.map(x =>
+            x.tension ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      },
+
+      {
+        label: "자신감",
+        data:
+          c.map(x =>
+            x.confidence ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      }
+
+    ]
+  },
+
+  options: {
+
+    responsive: true,
+    maintainAspectRatio: false,
+
+    scales: {
+
+      y: {
+        min: 1,
+        max: 10,
+        ticks: {
+          stepSize: 1
+        }
+      }
+
+    }
+
+  }
+
+});
+
+
+/* -------------------------
+   수면시간
+------------------------- */
+
+mkChart("sleepChart", {
+
+  type: "line",
+
+  data: {
+
+    labels: conditionLabels,
+
+    datasets: [
+
+      {
+        label: "수면시간",
+        data:
+          c.map(x =>
+            x.sleep_h ?? null
+          ),
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      }
+
+    ]
+  },
+
+  options: {
+
+    responsive: true,
+    maintainAspectRatio: false,
+
+    scales: {
+
+      y: {
+        min: 3,
+        max: 12
+      }
+
+    }
+
+  }
+
+});
 }
 
 function fillCmpSelect() {
