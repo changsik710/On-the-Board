@@ -412,9 +412,14 @@ renderDives();
 fillCmpSelect();
 
 if (PROFILE.role === "student") {
+
   renderRecentCoachFeedback();
+
+  await renderStudentPerformanceSummary();
+
 }
 
+   
 if (
   PROFILE.role === "coach" ||
   PROFILE.role === "admin"
@@ -775,6 +780,1298 @@ function renderRecentCoachFeedback() {
       `;
 
     }).join("");
+}
+
+/* ============================================================
+   선수 수행 기술 · 대회 기록
+   ============================================================ */
+
+const PERFORMANCE_GROUPS = [
+  {
+    apparatus: "springboard_1m",
+    title: "1m 스프링보드",
+    groups: [1, 2, 3, 4, 5]
+  },
+  {
+    apparatus: "springboard_3m",
+    title: "3m 스프링보드",
+    groups: [1, 2, 3, 4, 5]
+  },
+  {
+    apparatus: "platform",
+    title: "플랫폼",
+    groups: [1, 2, 3, 4, 5, 6]
+  }
+];
+
+
+function performanceEventName(value) {
+
+  return {
+    springboard_1m: "1m 스프링보드",
+    springboard_3m: "3m 스프링보드",
+    platform: "플랫폼"
+  }[value] || value;
+
+}
+
+
+function formatDD(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "-";
+  }
+
+  return Number(value)
+    .toFixed(2)
+    .replace(/0+$/, "")
+    .replace(/\.$/, "");
+}
+
+
+/* ============================================================
+   수행 기술 입력칸 만들기
+   ============================================================ */
+
+function renderSkillEditor(
+  targetId,
+  rows = []
+) {
+
+  const box =
+    document.getElementById(targetId);
+
+  if (!box) return;
+
+
+  box.innerHTML =
+    PERFORMANCE_GROUPS
+      .map(section => {
+
+        const rowHtml =
+          section.groups
+            .map(group => {
+
+              const saved =
+                rows.find(row =>
+                  row.apparatus === section.apparatus &&
+                  Number(row.dive_group) === group
+                );
+
+
+              return `
+                <div
+                  class="performance-skill-row"
+                  style="
+                    display:grid;
+                    grid-template-columns:70px minmax(0,1fr) minmax(90px,120px);
+                    gap:10px;
+                    align-items:end;
+                    margin:10px 0;
+                  "
+                >
+
+                  <div>
+                    <strong>
+                      ${group}번
+                    </strong>
+                  </div>
+
+
+                  <div>
+
+                    <label class="lbl">
+                      기술번호
+                    </label>
+
+                    <input
+                      type="text"
+                      class="performance-dive-no"
+                      data-apparatus="${section.apparatus}"
+                      data-group="${group}"
+                      value="${esc(saved?.dive_no || "")}"
+                      placeholder="예: 105B"
+                    >
+
+                  </div>
+
+
+                  <div>
+
+                    <label class="lbl">
+                      DD
+                    </label>
+
+                    <input
+                      type="number"
+                      class="performance-dd"
+                      data-apparatus="${section.apparatus}"
+                      data-group="${group}"
+                      value="${
+                        saved?.dd != null
+                          ? Number(saved.dd)
+                          : ""
+                      }"
+                      min="0"
+                      max="6"
+                      step="0.01"
+                      placeholder="2.40"
+                    >
+
+                  </div>
+
+                </div>
+              `;
+
+            })
+            .join("");
+
+
+        return `
+
+          <div style="margin-top:24px;">
+
+            <h3 style="margin-bottom:8px;">
+              ${section.title}
+            </h3>
+
+            ${rowHtml}
+
+          </div>
+
+        `;
+
+      })
+      .join("");
+
+}
+
+
+/* ============================================================
+   코치 · 관리자 수행기록 관리 설정
+   ============================================================ */
+
+function setupPerformanceManager(prefix) {
+
+  const select =
+    document.getElementById(
+      prefix + "PerformanceStudent"
+    );
+
+  const editor =
+    document.getElementById(
+      prefix + "PerformanceEditor"
+    );
+
+  if (!select || !editor) {
+    return;
+  }
+
+
+  const students =
+    MEMBERS.filter(
+      m => m.role === "student"
+    );
+
+
+  const oldValue =
+    select.value;
+
+
+  select.innerHTML =
+    `<option value="">
+      선수를 선택하세요
+    </option>` +
+
+    students
+      .map(student => `
+        <option value="${student.id}">
+          ${esc(student.name)}
+          ${
+            student.grade
+              ? ` · ${student.grade}학년`
+              : ""
+          }
+        </option>
+      `)
+      .join("");
+
+
+  if (
+    oldValue &&
+    students.some(
+      student =>
+        student.id === oldValue
+    )
+  ) {
+    select.value = oldValue;
+  }
+
+
+  const dateInput =
+    document.getElementById(
+      prefix + "CompDate"
+    );
+
+  if (
+    dateInput &&
+    !dateInput.value
+  ) {
+    dateInput.value =
+      new Date()
+        .toLocaleDateString("sv-SE");
+  }
+
+
+  select.onchange =
+    async () => {
+
+      const studentId =
+        select.value;
+
+
+      if (!studentId) {
+
+        editor.classList.add(
+          "hidden"
+        );
+
+        return;
+      }
+
+
+      editor.classList.remove(
+        "hidden"
+      );
+
+
+      await loadPerformanceManager(
+        studentId,
+        prefix
+      );
+
+    };
+
+
+  const skillSave =
+    document.getElementById(
+      prefix + "SkillSave"
+    );
+
+  if (skillSave) {
+
+    skillSave.onclick =
+      async () => {
+
+        if (!select.value) {
+          alert("선수를 먼저 선택하세요.");
+          return;
+        }
+
+        await saveSkillLevels(
+          select.value,
+          prefix
+        );
+
+      };
+  }
+
+
+  const compSave =
+    document.getElementById(
+      prefix + "CompSave"
+    );
+
+  if (compSave) {
+
+    compSave.onclick =
+      async () => {
+
+        if (!select.value) {
+          alert("선수를 먼저 선택하세요.");
+          return;
+        }
+
+        await saveCompetitionScore(
+          select.value,
+          prefix
+        );
+
+      };
+  }
+
+
+  if (select.value) {
+
+    editor.classList.remove(
+      "hidden"
+    );
+
+    loadPerformanceManager(
+      select.value,
+      prefix
+    );
+  }
+
+}
+
+
+/* ============================================================
+   선택한 선수 수행기록 불러오기
+   ============================================================ */
+
+async function loadPerformanceManager(
+  studentId,
+  prefix
+) {
+
+  const [
+    skillResult,
+    compResult
+  ] =
+    await Promise.all([
+
+      sb
+        .from("athlete_skill_levels")
+        .select("*")
+        .eq("user_id", studentId)
+        .order("apparatus")
+        .order("dive_group"),
+
+      sb
+        .from("competition_scores")
+        .select("*")
+        .eq("user_id", studentId)
+        .order(
+          "comp_date",
+          { ascending: false }
+        )
+
+    ]);
+
+
+  if (skillResult.error) {
+
+    console.error(
+      "수행 기술 조회 실패:",
+      skillResult.error
+    );
+
+  }
+
+
+  if (compResult.error) {
+
+    console.error(
+      "대회 기록 조회 실패:",
+      compResult.error
+    );
+
+  }
+
+
+  renderSkillEditor(
+    prefix + "SkillEditor",
+    skillResult.data || []
+  );
+
+
+  renderCompetitionList(
+    prefix + "CompList",
+    compResult.data || [],
+    studentId,
+    prefix
+  );
+
+}
+
+
+/* ============================================================
+   수행 기술 저장
+   ============================================================ */
+
+async function saveSkillLevels(
+  studentId,
+  prefix
+) {
+
+  const editor =
+    document.getElementById(
+      prefix + "SkillEditor"
+    );
+
+  const msg =
+    document.getElementById(
+      prefix + "SkillMsg"
+    );
+
+  if (!editor) return;
+
+
+  const rows = [];
+
+  const blankRows = [];
+
+  let invalid = false;
+
+
+  PERFORMANCE_GROUPS.forEach(section => {
+
+    section.groups.forEach(group => {
+
+      const noInput =
+        editor.querySelector(
+          `.performance-dive-no` +
+          `[data-apparatus="${section.apparatus}"]` +
+          `[data-group="${group}"]`
+        );
+
+      const ddInput =
+        editor.querySelector(
+          `.performance-dd` +
+          `[data-apparatus="${section.apparatus}"]` +
+          `[data-group="${group}"]`
+        );
+
+
+      const diveNo =
+        noInput?.value
+          .trim()
+          .toUpperCase() || "";
+
+      const ddText =
+        ddInput?.value.trim() || "";
+
+
+      if (!diveNo && !ddText) {
+
+        blankRows.push({
+          apparatus:
+            section.apparatus,
+
+          dive_group:
+            group
+        });
+
+        return;
+      }
+
+
+      if (!diveNo || !ddText) {
+
+        invalid = true;
+
+        return;
+      }
+
+
+      const dd =
+        Number(ddText);
+
+
+      if (
+        !Number.isFinite(dd) ||
+        dd <= 0 ||
+        dd > 6
+      ) {
+
+        invalid = true;
+
+        return;
+      }
+
+
+      rows.push({
+
+        user_id:
+          studentId,
+
+        apparatus:
+          section.apparatus,
+
+        dive_group:
+          group,
+
+        dive_no:
+          diveNo,
+
+        dd:
+          dd,
+
+        updated_by:
+          ME.id,
+
+        updated_at:
+          new Date().toISOString()
+
+      });
+
+    });
+
+  });
+
+
+  if (invalid) {
+
+    if (msg) {
+
+      msg.className =
+        "msg inline err";
+
+      msg.textContent =
+        "기술번호와 DD를 함께 입력해주세요.";
+
+    }
+
+    return;
+  }
+
+
+  if (msg) {
+
+    msg.className =
+      "msg inline";
+
+    msg.textContent =
+      "저장 중...";
+
+  }
+
+
+  if (rows.length) {
+
+    const { error } =
+      await sb
+        .from("athlete_skill_levels")
+        .upsert(
+          rows,
+          {
+            onConflict:
+              "user_id,apparatus,dive_group"
+          }
+        );
+
+
+    if (error) {
+
+      console.error(
+        "수행 기술 저장 실패:",
+        error
+      );
+
+
+      if (msg) {
+
+        msg.className =
+          "msg inline err";
+
+        msg.textContent =
+          "저장 실패: " +
+          error.message;
+
+      }
+
+      return;
+    }
+
+  }
+
+
+  /* 비워둔 종목군은 기존 기록 삭제 */
+
+  for (
+    const blank of blankRows
+  ) {
+
+    const { error } =
+      await sb
+        .from("athlete_skill_levels")
+        .delete()
+        .eq(
+          "user_id",
+          studentId
+        )
+        .eq(
+          "apparatus",
+          blank.apparatus
+        )
+        .eq(
+          "dive_group",
+          blank.dive_group
+        );
+
+
+    if (error) {
+
+      console.error(
+        "빈 수행 기술 삭제 실패:",
+        error
+      );
+
+    }
+
+  }
+
+
+  if (msg) {
+
+    msg.className =
+      "msg inline ok";
+
+    msg.textContent =
+      "수행 기술이 저장되었습니다.";
+
+  }
+
+
+  await loadPerformanceManager(
+    studentId,
+    prefix
+  );
+
+
+  setTimeout(
+    () => {
+
+      if (msg) {
+        msg.textContent = "";
+      }
+
+    },
+    2500
+  );
+
+}
+
+
+/* ============================================================
+   대회 기록 저장
+   ============================================================ */
+
+async function saveCompetitionScore(
+  studentId,
+  prefix
+) {
+
+  const date =
+    document.getElementById(
+      prefix + "CompDate"
+    )?.value || "";
+
+  const name =
+    document.getElementById(
+      prefix + "CompName"
+    )?.value.trim() || "";
+
+  const eventType =
+    document.getElementById(
+      prefix + "CompEvent"
+    )?.value || "";
+
+  const scoreText =
+    document.getElementById(
+      prefix + "CompScore"
+    )?.value || "";
+
+  const rankText =
+    document.getElementById(
+      prefix + "CompRank"
+    )?.value || "";
+
+  const note =
+    document.getElementById(
+      prefix + "CompNote"
+    )?.value.trim() || "";
+
+  const msg =
+    document.getElementById(
+      prefix + "CompMsg"
+    );
+
+
+  if (
+    !date ||
+    !name ||
+    !eventType ||
+    scoreText === ""
+  ) {
+
+    if (msg) {
+
+      msg.className =
+        "msg inline err";
+
+      msg.textContent =
+        "대회일, 대회명, 종목, 점수를 입력해주세요.";
+
+    }
+
+    return;
+  }
+
+
+  const score =
+    Number(scoreText);
+
+  const rank =
+    rankText
+      ? Number(rankText)
+      : null;
+
+
+  if (
+    !Number.isFinite(score) ||
+    score < 0
+  ) {
+
+    if (msg) {
+
+      msg.className =
+        "msg inline err";
+
+      msg.textContent =
+        "점수를 확인해주세요.";
+
+    }
+
+    return;
+  }
+
+
+  if (
+    rank !== null &&
+    (
+      !Number.isInteger(rank) ||
+      rank < 1
+    )
+  ) {
+
+    if (msg) {
+
+      msg.className =
+        "msg inline err";
+
+      msg.textContent =
+        "순위를 확인해주세요.";
+
+    }
+
+    return;
+  }
+
+
+  const { error } =
+    await sb
+      .from("competition_scores")
+      .insert({
+
+        user_id:
+          studentId,
+
+        comp_date:
+          date,
+
+        comp_name:
+          name,
+
+        event_type:
+          eventType,
+
+        score:
+          score,
+
+        rank:
+          rank,
+
+        note:
+          note || null,
+
+        entered_by:
+          ME.id
+
+      });
+
+
+  if (error) {
+
+    console.error(
+      "대회 기록 저장 실패:",
+      error
+    );
+
+
+    if (msg) {
+
+      msg.className =
+        "msg inline err";
+
+      msg.textContent =
+        "저장 실패: " +
+        error.message;
+
+    }
+
+    return;
+  }
+
+
+  if (msg) {
+
+    msg.className =
+      "msg inline ok";
+
+    msg.textContent =
+      "대회 기록이 저장되었습니다.";
+
+  }
+
+
+  const nameInput =
+    document.getElementById(
+      prefix + "CompName"
+    );
+
+  const scoreInput =
+    document.getElementById(
+      prefix + "CompScore"
+    );
+
+  const rankInput =
+    document.getElementById(
+      prefix + "CompRank"
+    );
+
+  const noteInput =
+    document.getElementById(
+      prefix + "CompNote"
+    );
+
+
+  if (nameInput) {
+    nameInput.value = "";
+  }
+
+  if (scoreInput) {
+    scoreInput.value = "";
+  }
+
+  if (rankInput) {
+    rankInput.value = "";
+  }
+
+  if (noteInput) {
+    noteInput.value = "";
+  }
+
+
+  await loadPerformanceManager(
+    studentId,
+    prefix
+  );
+
+
+  setTimeout(
+    () => {
+
+      if (msg) {
+        msg.textContent = "";
+      }
+
+    },
+    2500
+  );
+
+}
+
+
+/* ============================================================
+   대회 기록 목록
+   ============================================================ */
+
+function renderCompetitionList(
+  targetId,
+  rows,
+  studentId,
+  prefix
+) {
+
+  const box =
+    document.getElementById(targetId);
+
+  if (!box) return;
+
+
+  if (!rows.length) {
+
+    box.innerHTML = `
+      <div class="m">
+        등록된 대회 기록이 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    rows
+      .map(row => `
+
+        <div class="member-row">
+
+          <div>
+
+            <div class="t">
+
+              ${esc(row.comp_name)}
+
+              <span class="tag">
+                ${esc(
+                  performanceEventName(
+                    row.event_type
+                  )
+                )}
+              </span>
+
+            </div>
+
+
+            <div class="m">
+
+              ${esc(row.comp_date || "")}
+
+              · ${Number(row.score).toFixed(2)}점
+
+              ${
+                row.rank
+                  ? ` · ${row.rank}위`
+                  : ""
+              }
+
+            </div>
+
+
+            ${
+              row.note
+                ? `
+                  <div style="margin-top:5px;">
+                    ${esc(row.note)}
+                  </div>
+                `
+                : ""
+            }
+
+          </div>
+
+
+          <button
+            type="button"
+            class="btn sm danger performance-comp-delete"
+            data-id="${row.id}"
+          >
+            삭제
+          </button>
+
+        </div>
+
+      `)
+      .join("");
+
+
+  box
+    .querySelectorAll(
+      ".performance-comp-delete"
+    )
+    .forEach(button => {
+
+      button.onclick =
+        async () => {
+
+          const id =
+            Number(button.dataset.id);
+
+
+          if (
+            !confirm(
+              "이 대회 기록을 삭제할까요?"
+            )
+          ) {
+            return;
+          }
+
+
+          const { error } =
+            await sb
+              .from("competition_scores")
+              .delete()
+              .eq("id", id);
+
+
+          if (error) {
+
+            alert(
+              "삭제 실패: " +
+              error.message
+            );
+
+            return;
+          }
+
+
+          await loadPerformanceManager(
+            studentId,
+            prefix
+          );
+
+        };
+
+    });
+
+}
+
+
+/* ============================================================
+   학생 : 자기 수행 기술 · 대회 기록
+   ============================================================ */
+
+async function renderStudentPerformanceSummary() {
+
+  if (
+    PROFILE.role !== "student"
+  ) {
+    return;
+  }
+
+
+  const card =
+    document.getElementById(
+      "studentPerformanceSummary"
+    );
+
+  const skillBox =
+    document.getElementById(
+      "studentSkillSummary"
+    );
+
+  const compBox =
+    document.getElementById(
+      "studentCompetitionList"
+    );
+
+
+  if (
+    !card ||
+    !skillBox ||
+    !compBox
+  ) {
+    return;
+  }
+
+
+  card.classList.remove(
+    "hidden"
+  );
+
+
+  const [
+    skillResult,
+    compResult
+  ] =
+    await Promise.all([
+
+      sb
+        .from("athlete_skill_levels")
+        .select("*")
+        .eq("user_id", ME.id)
+        .order("apparatus")
+        .order("dive_group"),
+
+      sb
+        .from("competition_scores")
+        .select("*")
+        .eq("user_id", ME.id)
+        .order(
+          "comp_date",
+          { ascending: false }
+        )
+
+    ]);
+
+
+  if (skillResult.error) {
+
+    skillBox.innerHTML = `
+      <div class="m">
+        수행 기술을 불러오지 못했습니다.
+      </div>
+    `;
+
+  } else {
+
+    const rows =
+      skillResult.data || [];
+
+
+    skillBox.innerHTML =
+      PERFORMANCE_GROUPS
+        .map(section => {
+
+          const sectionRows =
+            section.groups
+              .map(group => {
+
+                const row =
+                  rows.find(x =>
+                    x.apparatus ===
+                      section.apparatus &&
+                    Number(
+                      x.dive_group
+                    ) === group
+                  );
+
+
+                return `
+
+                  <div
+                    class="member-row"
+                    style="margin:6px 0;"
+                  >
+
+                    <strong>
+                      ${group}번
+                    </strong>
+
+                    <div>
+                      ${
+                        row
+                          ? `
+                            ${esc(row.dive_no)}
+                            · DD
+                            ${formatDD(row.dd)}
+                          `
+                          : `
+                            <span class="m">
+                              미등록
+                            </span>
+                          `
+                      }
+                    </div>
+
+                  </div>
+
+                `;
+
+              })
+              .join("");
+
+
+          return `
+
+            <div style="margin-top:18px;">
+
+              <h3>
+                ${section.title}
+              </h3>
+
+              ${sectionRows}
+
+            </div>
+
+          `;
+
+        })
+        .join("");
+
+  }
+
+
+  if (compResult.error) {
+
+    compBox.innerHTML = `
+      <div class="m">
+        대회 기록을 불러오지 못했습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const comps =
+    compResult.data || [];
+
+
+  if (!comps.length) {
+
+    compBox.innerHTML = `
+      <div class="m">
+        등록된 대회 기록이 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  compBox.innerHTML =
+    comps
+      .map(row => `
+
+        <div class="member-row">
+
+          <div>
+
+            <div class="t">
+
+              ${esc(row.comp_name)}
+
+              <span class="tag">
+                ${esc(
+                  performanceEventName(
+                    row.event_type
+                  )
+                )}
+              </span>
+
+            </div>
+
+
+            <div class="m">
+
+              ${esc(row.comp_date || "")}
+
+              · ${Number(row.score).toFixed(2)}점
+
+              ${
+                row.rank
+                  ? ` · ${row.rank}위`
+                  : ""
+              }
+
+            </div>
+
+
+            ${
+              row.note
+                ? `
+                  <div style="margin-top:5px;">
+                    ${esc(row.note)}
+                  </div>
+                `
+                : ""
+            }
+
+          </div>
+
+        </div>
+
+      `)
+      .join("");
+
 }
 
 /* ---------- 컨디션 체크인 ---------- */
@@ -2615,6 +3912,9 @@ setupStaffTrend(
   "coachTrendCharts",
   "coach"
 );
+   setupPerformanceManager(
+  "coach"
+);
 }
 
 
@@ -2994,6 +4294,9 @@ renderTeamConditions("adminConditionList");
 setupStaffTrend(
   "adminTrendStudent",
   "adminTrendCharts",
+  "admin"
+);
+   setupPerformanceManager(
   "admin"
 );
 }
