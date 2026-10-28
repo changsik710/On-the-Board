@@ -1777,6 +1777,285 @@ async function drawCharts() {
 
 }
 
+/* ============================================================
+   코치 · 관리자 : 선수 컨디션 추세 설정
+   ============================================================ */
+
+function setupStaffTrend(
+  selectId,
+  chartWrapId,
+  prefix
+) {
+
+  const select =
+    document.getElementById(selectId);
+
+  const wrap =
+    document.getElementById(chartWrapId);
+
+  if (!select || !wrap) {
+    return;
+  }
+
+
+  const students =
+    MEMBERS.filter(
+      m => m.role === "student"
+    );
+
+
+  const currentValue =
+    select.value;
+
+
+  select.innerHTML =
+    `<option value="">
+      선수를 선택하세요
+    </option>` +
+    students
+      .map(student => `
+        <option value="${student.id}">
+          ${esc(student.name)}
+          ${student.grade ? ` · ${student.grade}학년` : ""}
+        </option>
+      `)
+      .join("");
+
+
+  if (
+    currentValue &&
+    students.some(
+      student =>
+        student.id === currentValue
+    )
+  ) {
+    select.value =
+      currentValue;
+  }
+
+
+  select.onchange =
+    async () => {
+
+      const studentId =
+        select.value;
+
+
+      if (!studentId) {
+
+        wrap.classList.add(
+          "hidden"
+        );
+
+        return;
+      }
+
+
+      wrap.classList.remove(
+        "hidden"
+      );
+
+
+      await drawStaffConditionTrend(
+        studentId,
+        prefix
+      );
+
+    };
+
+}
+
+
+/* ============================================================
+   코치 · 관리자 : 선택 선수 컨디션 추세 그리기
+   ============================================================ */
+
+async function drawStaffConditionTrend(
+  studentId,
+  prefix
+) {
+
+  const { data, error } =
+    await sb
+      .from("checkins")
+      .select("*")
+      .eq(
+        "user_id",
+        studentId
+      )
+      .order(
+        "ck_date",
+        {
+          ascending: true
+        }
+      )
+      .limit(90);
+
+
+  if (error) {
+
+    console.error(
+      "선수 컨디션 추세 조회 실패:",
+      error
+    );
+
+    return;
+  }
+
+
+  const rows =
+    data || [];
+
+
+  const labels =
+    rows.map(row =>
+      row.ck_date
+        ? row.ck_date.slice(5)
+        : ""
+    );
+
+
+  /* 공통 그래프 생성 함수 */
+
+  const makeTrendChart =
+    (
+      id,
+      label,
+      field,
+      min,
+      max
+    ) => {
+
+      mkChart(
+        id,
+        {
+
+          type: "line",
+
+          data: {
+
+            labels,
+
+            datasets: [
+              {
+                label: label,
+
+                data:
+                  rows.map(row =>
+                    row[field] ?? null
+                  ),
+
+                pointRadius: 4,
+                tension: 0.25,
+                spanGaps: true
+              }
+            ]
+
+          },
+
+          options: {
+
+            responsive: true,
+            maintainAspectRatio: false,
+
+            scales: {
+
+              y: {
+                min: min,
+                max: max,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+
+            }
+
+          }
+
+        }
+      );
+
+    };
+
+
+  /* 피로도 */
+
+  makeTrendChart(
+    prefix + "FatigueChart",
+    "피로도",
+    "fatigue",
+    1,
+    5
+  );
+
+
+  /* 통증 */
+
+  makeTrendChart(
+    prefix + "PainChart",
+    "통증",
+    "pain",
+    1,
+    5
+  );
+
+
+  /* 집중도 */
+
+  makeTrendChart(
+    prefix + "FocusChart",
+    "집중도",
+    "focus",
+    1,
+    5
+  );
+
+
+  /* 기분 */
+
+  makeTrendChart(
+    prefix + "MoodChart",
+    "기분",
+    "mood",
+    1,
+    5
+  );
+
+
+  /* 긴장도 */
+
+  makeTrendChart(
+    prefix + "TensionChart",
+    "긴장도",
+    "tension",
+    1,
+    10
+  );
+
+
+  /* 자신감 */
+
+  makeTrendChart(
+    prefix + "ConfidenceChart",
+    "자신감",
+    "confidence",
+    1,
+    10
+  );
+
+
+  /* 수면시간 */
+
+  makeTrendChart(
+    prefix + "SleepChart",
+    "수면시간",
+    "sleep_h",
+    3,
+    12
+  );
+
+}
+
 function fillCmpSelect() {
   const mine = DIVES.filter(d => d.user_id === ME.id && d.video_path);
   const opt = mine.map(d => `<option value="${d.id}">${d.dive_date} · ${esc(d.dive_no || "-")}</option>`).join("");
@@ -2330,8 +2609,13 @@ function renderCoach() {
     }
   }
 renderTeamConditions("coachConditionList");
-}
 
+setupStaffTrend(
+  "coachTrendStudent",
+  "coachTrendCharts",
+  "coach"
+);
+}
 
 
 /* ============================================================
@@ -2703,11 +2987,16 @@ function renderAdmin() {
                  }).join("");
     }
   }
+renderAdminNotices();
 
-  renderAdminNotices();
+renderTeamConditions("adminConditionList");
 
-  renderTeamConditions("adminConditionList");
-} 
+setupStaffTrend(
+  "adminTrendStudent",
+  "adminTrendCharts",
+  "admin"
+);
+}
 
 /* ============================================================
    공지사항 관리
