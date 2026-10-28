@@ -322,7 +322,46 @@
     </div>
 
   </div>
+<!-- =====================================================
+     학생 전용 : 현재 수행 기술 · 대회 기록
+====================================================== -->
+<div
+  id="studentPerformanceSummary"
+  class="card hidden"
+>
 
+  <h2>내 현재 수행 기술</h2>
+
+  <p class="hint">
+    코치가 등록한 현재 수행 가능한 기술과 난이도(DD)를 확인합니다.
+  </p>
+
+  <div id="studentSkillSummary">
+    <div class="m">
+      등록된 수행 기술이 없습니다.
+    </div>
+  </div>
+
+
+  <hr style="margin:24px 0">
+
+
+  <h2>내 대회 기록</h2>
+
+  <p class="hint">
+    대회별 종목, 점수와 순위를 확인합니다.
+  </p>
+
+  <div
+    id="studentCompetitionList"
+    class="list"
+  >
+    <div class="m">
+      등록된 대회 기록이 없습니다.
+    </div>
+  </div>
+
+</div>
 
   <!-- =====================================================
        공지사항
@@ -836,7 +875,164 @@
 
   </div>
 
+<!-- =====================================================
+     코치 : 선수 수행 기술 · 대회 기록 관리
+====================================================== -->
+<div class="card">
 
+  <h2>선수 수행 기록 관리</h2>
+
+  <p class="hint">
+    선수를 선택하여 현재 수행 가능한 기술과 대회 기록을 관리합니다.
+  </p>
+
+
+  <label class="lbl">선수 선택</label>
+
+  <select id="coachPerformanceStudent">
+    <option value="">선수를 선택하세요</option>
+  </select>
+
+
+  <div
+    id="coachPerformanceEditor"
+    class="hidden"
+    style="margin-top:20px;"
+  >
+
+    <h3>현재 수행 기술</h3>
+
+    <p class="hint">
+      1m 스프링보드, 3m 스프링보드, 플랫폼의 종목군별
+      현재 최고 수행 기술번호와 DD를 입력합니다.
+    </p>
+
+    <div id="coachSkillEditor"></div>
+
+    <button
+      id="coachSkillSave"
+      class="btn primary"
+      type="button"
+    >
+      수행 기술 저장
+    </button>
+
+    <span
+      id="coachSkillMsg"
+      class="msg inline"
+    ></span>
+
+
+    <hr style="margin:28px 0">
+
+
+    <h3>대회 기록 추가</h3>
+
+    <div class="grid3">
+
+      <div>
+        <label class="lbl">대회일</label>
+        <input
+          type="date"
+          id="coachCompDate"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">대회명</label>
+        <input
+          type="text"
+          id="coachCompName"
+          placeholder="예: 전국소년체육대회"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">종목</label>
+        <select id="coachCompEvent">
+          <option value="springboard_1m">
+            1m 스프링보드
+          </option>
+          <option value="springboard_3m">
+            3m 스프링보드
+          </option>
+          <option value="platform">
+            플랫폼
+          </option>
+        </select>
+      </div>
+
+    </div>
+
+
+    <div class="grid3">
+
+      <div>
+        <label class="lbl">점수</label>
+        <input
+          type="number"
+          id="coachCompScore"
+          step="0.01"
+          min="0"
+          placeholder="예: 287.40"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">순위</label>
+        <input
+          type="number"
+          id="coachCompRank"
+          min="1"
+          step="1"
+          placeholder="선택사항"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">메모</label>
+        <input
+          type="text"
+          id="coachCompNote"
+          placeholder="선택사항"
+        >
+      </div>
+
+    </div>
+
+
+    <button
+      id="coachCompSave"
+      class="btn primary"
+      type="button"
+    >
+      대회 기록 저장
+    </button>
+
+    <span
+      id="coachCompMsg"
+      class="msg inline"
+    ></span>
+
+
+    <hr style="margin:28px 0">
+
+
+    <h3>등록된 대회 기록</h3>
+
+    <div
+      id="coachCompList"
+      class="list"
+    >
+      <div class="m">
+        등록된 대회 기록이 없습니다.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+     
   <!-- 선수 목록 -->
   <div class="card">
 
@@ -963,7 +1159,165 @@
 
   </div>
 
+<!-- =====================================================
+     관리자 : 선수 수행 기술 · 대회 기록 관리
+====================================================== -->
+<div class="card">
 
+  <h2>선수 수행 기록 관리</h2>
+
+  <p class="hint">
+    선수를 선택하여 현재 수행 가능한 기술과 대회 기록을 관리합니다.
+  </p>
+
+
+  <label class="lbl">선수 선택</label>
+
+  <select id="adminPerformanceStudent">
+    <option value="">선수를 선택하세요</option>
+  </select>
+
+
+  <div
+    id="adminPerformanceEditor"
+    class="hidden"
+    style="margin-top:20px;"
+  >
+
+    <h3>현재 수행 기술</h3>
+
+    <p class="hint">
+      1m 스프링보드, 3m 스프링보드, 플랫폼의 종목군별
+      현재 최고 수행 기술번호와 DD를 입력합니다.
+    </p>
+
+    <div id="adminSkillEditor"></div>
+
+    <button
+      id="adminSkillSave"
+      class="btn primary"
+      type="button"
+    >
+      수행 기술 저장
+    </button>
+
+    <span
+      id="adminSkillMsg"
+      class="msg inline"
+    ></span>
+
+
+    <hr style="margin:28px 0">
+
+
+    <h3>대회 기록 추가</h3>
+
+    <div class="grid3">
+
+      <div>
+        <label class="lbl">대회일</label>
+        <input
+          type="date"
+          id="adminCompDate"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">대회명</label>
+        <input
+          type="text"
+          id="adminCompName"
+          placeholder="예: 전국소년체육대회"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">종목</label>
+        <select id="adminCompEvent">
+          <option value="springboard_1m">
+            1m 스프링보드
+          </option>
+          <option value="springboard_3m">
+            3m 스프링보드
+          </option>
+          <option value="platform">
+            플랫폼
+          </option>
+        </select>
+      </div>
+
+    </div>
+
+
+    <div class="grid3">
+
+      <div>
+        <label class="lbl">점수</label>
+        <input
+          type="number"
+          id="adminCompScore"
+          step="0.01"
+          min="0"
+          placeholder="예: 287.40"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">순위</label>
+        <input
+          type="number"
+          id="adminCompRank"
+          min="1"
+          step="1"
+          placeholder="선택사항"
+        >
+      </div>
+
+      <div>
+        <label class="lbl">메모</label>
+        <input
+          type="text"
+          id="adminCompNote"
+          placeholder="선택사항"
+        >
+      </div>
+
+    </div>
+
+
+    <button
+      id="adminCompSave"
+      class="btn primary"
+      type="button"
+    >
+      대회 기록 저장
+    </button>
+
+    <span
+      id="adminCompMsg"
+      class="msg inline"
+    ></span>
+
+
+    <hr style="margin:28px 0">
+
+
+    <h3>등록된 대회 기록</h3>
+
+    <div
+      id="adminCompList"
+      class="list"
+    >
+      <div class="m">
+        등록된 대회 기록이 없습니다.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+     
   <!-- 선수 · 코치 관리 -->
   <div class="card">
 
