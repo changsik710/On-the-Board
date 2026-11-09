@@ -84,9 +84,15 @@ function bindUI() {
     .classList.remove("hidden");
 
 
-  if (t.dataset.tab === "growth") {
-    drawCharts();
+ if (t.dataset.tab === "growth") {
+
+  drawCharts();
+
+  if (PROFILE.role === "student") {
+    renderStudentPerformanceSummary();
   }
+
+}
 
   if (t.dataset.tab === "coach") {
     renderCoach();
