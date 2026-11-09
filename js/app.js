@@ -2584,40 +2584,7 @@ async function drawCharts() {
       .reverse();
 
 
-  /* =====================================================
-     1. DD 성장 추이
-  ===================================================== */
-
-  const byMonth = {};
-
-  mine.forEach(d => {
-
-    if (!d.dd || !d.dive_date) return;
-
-    const k =
-      d.dive_date.slice(0, 7);
-
-    byMonth[k] =
-      Math.max(
-        byMonth[k] || 0,
-        Number(d.dd)
-      );
-
-  });
-
-
-  const mk =
-    Object.keys(byMonth).sort();
-
-
-  mkChart("ddChart", {
-
-    type: "line",
-
-    data: {
-
-      labels: mk,
-
+ 
 
   /* =====================================================
      1. 동작 분절 평균
