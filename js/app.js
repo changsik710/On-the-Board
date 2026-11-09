@@ -68,7 +68,7 @@ function bindUI() {
 
   $("#logoutBtn").onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
-  $$("#tabs .tab").forEach(t => t.onclick = () => {
+ $$("#tabs .tab").forEach(t => t.onclick = async () => {
 
   $$("#tabs .tab").forEach(x =>
     x.classList.remove("active")
@@ -83,17 +83,16 @@ function bindUI() {
   $("#tab-" + t.dataset.tab)
     .classList.remove("hidden");
 
-
- if (t.dataset.tab === "growth") {
+if (t.dataset.tab === "growth") {
 
   drawCharts();
 
   if (PROFILE.role === "student") {
-    renderStudentPerformanceSummary();
+    await renderStudentPerformanceSummary();
   }
 
 }
-
+ 
   if (t.dataset.tab === "coach") {
     renderCoach();
   }
