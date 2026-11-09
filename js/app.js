@@ -149,19 +149,74 @@ if (checkinDate) {
   $("#expFb").onclick = () => exportCSV("feedbacks");
   $("#expCk").onclick = () => exportCSV("checkins");
 
-  $("#cmpA").onchange = () => loadCmp("A");
-  $("#cmpB").onchange = () => loadCmp("B");
-  $("#cmpPlay").onclick = () => {
-    const a = $("#vidA"), b = $("#vidB");
-    if (a.paused) { a.play(); b.play(); } else { a.pause(); b.pause(); }
-  };
-  $("#cmpSlow").onclick = () => {
-    const r = $("#vidA").playbackRate === 1 ? 0.25 : 1;
-    $("#vidA").playbackRate = r; $("#vidB").playbackRate = r;
-    $("#cmpSlow").textContent = r === 1 ? "0.25배속" : "정상속도";
-  };
-  $("#cmpReset").onclick = () => { $("#vidA").currentTime = 0; $("#vidB").currentTime = 0; };
+  const cmpA = $("#cmpA");
+const cmpB = $("#cmpB");
+const cmpPlay = $("#cmpPlay");
+const cmpSlow = $("#cmpSlow");
+const cmpReset = $("#cmpReset");
 
+if (cmpA) {
+  cmpA.onchange = () => loadCmp("A");
+}
+
+if (cmpB) {
+  cmpB.onchange = () => loadCmp("B");
+}
+
+if (cmpPlay) {
+  cmpPlay.onclick = () => {
+
+    const a = $("#vidA");
+    const b = $("#vidB");
+
+    if (!a || !b) return;
+
+    if (a.paused) {
+      a.play();
+      b.play();
+    } else {
+      a.pause();
+      b.pause();
+    }
+
+  };
+}
+
+if (cmpSlow) {
+  cmpSlow.onclick = () => {
+
+    const a = $("#vidA");
+    const b = $("#vidB");
+
+    if (!a || !b) return;
+
+    const r =
+      a.playbackRate === 1
+        ? 0.25
+        : 1;
+
+    a.playbackRate = r;
+    b.playbackRate = r;
+
+    cmpSlow.textContent =
+      r === 1
+        ? "0.25배속"
+        : "정상속도";
+  };
+}
+
+if (cmpReset) {
+  cmpReset.onclick = () => {
+
+    const a = $("#vidA");
+    const b = $("#vidB");
+
+    if (!a || !b) return;
+
+    a.currentTime = 0;
+    b.currentTime = 0;
+  };
+}
   $("#dvDate").value = new Date().toISOString().slice(0, 10);
 }
 
@@ -3370,11 +3425,39 @@ async function drawStaffConditionTrend(
 }
 
 function fillCmpSelect() {
-  const mine = DIVES.filter(d => d.user_id === ME.id && d.video_path);
-  const opt = mine.map(d => `<option value="${d.id}">${d.dive_date} · ${esc(d.dive_no || "-")}</option>`).join("");
-  $("#cmpA").innerHTML = '<option value="">초기 영상 선택</option>' + opt;
-  $("#cmpB").innerHTML = '<option value="">최근 영상 선택</option>' + opt;
+
+  const cmpA = $("#cmpA");
+  const cmpB = $("#cmpB");
+
+  if (!cmpA || !cmpB) {
+    return;
+  }
+
+  const mine =
+    DIVES.filter(
+      d =>
+        d.user_id === ME.id &&
+        d.video_path
+    );
+
+  const opt =
+    mine
+      .map(d => `
+        <option value="${d.id}">
+          ${d.dive_date} · ${esc(d.dive_no || "-")}
+        </option>
+      `)
+      .join("");
+
+  cmpA.innerHTML =
+    '<option value="">초기 영상 선택</option>' +
+    opt;
+
+  cmpB.innerHTML =
+    '<option value="">최근 영상 선택</option>' +
+    opt;
 }
+
 async function loadCmp(side) {
   const id = Number($("#cmp" + side).value);
   const d = DIVES.find(x => x.id === id);
